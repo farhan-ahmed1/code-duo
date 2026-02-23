@@ -14,6 +14,8 @@ interface Shortcut {
 }
 
 const SHORTCUTS: Shortcut[] = [
+  { keys: ["C"], description: "Create a new room" },
+  { keys: ["J"], description: "Join an existing room" },
   { keys: ["⌘", "S"], description: "Auto-saved — triggers confirmation toast" },
   { keys: ["⌘", "K"], description: "Quick room switcher / command palette" },
   { keys: ["?"], description: "Show this help dialog" },

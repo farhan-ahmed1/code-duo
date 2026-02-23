@@ -2,9 +2,10 @@
 
 interface HeroSectionProps {
   onCreateRoom: () => void;
+  onJoinRoom: () => void;
 }
 
-export default function HeroSection({ onCreateRoom }: HeroSectionProps) {
+export default function HeroSection({ onCreateRoom, onJoinRoom }: HeroSectionProps) {
   return (
     <section className="hero">
       <div className="container">
@@ -35,19 +36,13 @@ export default function HeroSection({ onCreateRoom }: HeroSectionProps) {
               C
             </span>
           </button>
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-secondary-lg"
-          >
+          <button onClick={onJoinRoom} className="btn-secondary-lg">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 8 12 12 14 14" />
+              <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" />
             </svg>
-            Clone source
-            <span className="kbd">G</span>
-          </a>
+            Join room
+            <span className="kbd">J</span>
+          </button>
         </div>
         <p className="hero-note fade-up delay-5">
           Free &amp; open source — no account required

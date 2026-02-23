@@ -5,9 +5,10 @@ import Image from "next/image";
 
 interface LandingNavProps {
   onCreateRoom: () => void;
+  onJoinRoom: () => void;
 }
 
-export default function LandingNav({ onCreateRoom }: LandingNavProps) {
+export default function LandingNav({ onCreateRoom, onJoinRoom }: LandingNavProps) {
   return (
     <nav className="landing-nav">
       <Link href="/" className="nav-logo">
@@ -25,9 +26,9 @@ export default function LandingNav({ onCreateRoom }: LandingNavProps) {
         </li>
       </ul>
       <div className="nav-right">
-        <a href="#" className="btn-ghost">
-          Sign in <span className="kbd">S</span>
-        </a>
+        <button onClick={onJoinRoom} className="btn-ghost">
+          Join room <span className="kbd">J</span>
+        </button>
         <button onClick={onCreateRoom} className="btn-primary">
           Create room{" "}
           <span
