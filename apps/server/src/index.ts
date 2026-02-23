@@ -4,7 +4,10 @@ import { Hono } from "hono";
 import { WebSocketServer } from "ws";
 import { apiRouter } from "./api/routes";
 import { corsMiddleware, requestLogger, errorHandler } from "./api/middleware";
+import { apiRateLimit } from "./api/rate-limiter";
+import { bodySizeLimit } from "./api/validation";
 import { setupWebSocketServer } from "./ws-server";
+import { startRoomCleanupJob } from "./jobs/room-cleanup";
 import { logger } from "./utils/logger";
 import { initMetrics } from "./utils/metrics";
 
@@ -14,6 +17,8 @@ const app = new Hono();
 
 app.use("*", corsMiddleware);
 app.use("*", requestLogger);
+app.use("/api/*", bodySizeLimit);
+app.use("/api/*", apiRateLimit);
 app.route("/api", apiRouter);
 app.onError(errorHandler);
 
@@ -37,6 +42,7 @@ httpServer.on("request", getRequestListener(app.fetch));
 httpServer.listen(PORT, () => {
   logger.info({ port: PORT }, "Code Duo server started");
   initMetrics();
+  startRoomCleanupJob();
 });
 
 export { app };

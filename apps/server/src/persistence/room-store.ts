@@ -117,6 +117,32 @@ export class RoomStore {
     this.db.prepare("DELETE FROM rooms WHERE id = ?").run(id);
   }
 
+  /**
+   * Update a room's `accessed_at` timestamp to the current time.
+   * Called on every WebSocket connection to keep active rooms alive.
+   *
+   * @param id - The room ID to touch.
+   */
+  touchRoom(id: string): void {
+    this.db
+      .prepare("UPDATE rooms SET accessed_at = ? WHERE id = ?")
+      .run(new Date().toISOString(), id);
+  }
+
+  /**
+   * Return IDs of rooms not accessed in the past N days.
+   * Useful for coordinating document cleanup before purging rows.
+   */
+  getStaleRoomIds(olderThanDays: number): string[] {
+    const cutoff = new Date(
+      Date.now() - olderThanDays * 86_400_000,
+    ).toISOString();
+    const rows = this.db
+      .prepare("SELECT id FROM rooms WHERE accessed_at < ?")
+      .all(cutoff) as { id: string }[];
+    return rows.map((r) => r.id);
+  }
+
   /** Delete rooms not accessed in the past N days */
   purgeStaleRooms(olderThanDays: number): number {
     const cutoff = new Date(

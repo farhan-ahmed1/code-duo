@@ -2,6 +2,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { IncomingMessage } from "node:http";
 import { setupWSConnection, setPersistence } from "y-websocket/bin/utils";
 import { DocumentStore } from "./persistence/document-store";
+import { RoomStore } from "./persistence/room-store";
 import { logger } from "./utils/logger";
 import {
   activeConnections,
@@ -13,8 +14,12 @@ import * as Y from "yjs";
 import { DOCUMENT_DEBOUNCE_MS } from "@code-duo/shared/src/constants";
 
 const documentStore = new DocumentStore();
+const roomStore = new RoomStore();
 const roomConnectionCounts = new Map<string, number>();
 const saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+// Export for use by the cleanup job
+export { documentStore, roomStore as wsRoomStore };
 
 function getRoomNameFromUrl(url: string): string {
   // URL format: /yjs/:roomId
@@ -70,6 +75,9 @@ export function setupWebSocketServer(wss: WebSocketServer) {
     if (count === 1) activeRooms.inc();
 
     logger.info({ roomId, totalInRoom: count }, "Client connected");
+
+    // Update accessed_at so the room survives expiration cleanup
+    roomStore.touchRoom(roomId);
 
     // y-websocket handles the Yjs sync protocol
     setupWSConnection(ws, req, {

@@ -1,4 +1,5 @@
 import RoomClient from "./RoomClient";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 interface RoomPageProps {
   params: Promise<{ roomId: string }>;
@@ -7,5 +8,9 @@ interface RoomPageProps {
 export default async function RoomPage({ params }: RoomPageProps) {
   const { roomId } = await params;
 
-  return <RoomClient roomId={roomId} />;
+  return (
+    <ErrorBoundary>
+      <RoomClient roomId={roomId} />
+    </ErrorBoundary>
+  );
 }
