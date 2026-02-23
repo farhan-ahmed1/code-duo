@@ -7,6 +7,8 @@ import {
   DEFAULT_LANGUAGE,
 } from "@code-duo/shared/src/constants";
 import type { EditorLanguage } from "@code-duo/shared/src/types";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 import {
   Dialog,
   DialogContent,
@@ -38,7 +40,7 @@ export default function CreateRoomDialog({
     setError(null);
 
     try {
-      const res = await fetch("/api/rooms", {
+      const res = await fetch(`${API_URL}/api/rooms`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim() || "My Room", language }),

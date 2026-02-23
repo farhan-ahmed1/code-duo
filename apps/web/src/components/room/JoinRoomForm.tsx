@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+
 export default function JoinRoomForm() {
   const router = useRouter();
   const [input, setInput] = useState("");
@@ -34,7 +36,7 @@ export default function JoinRoomForm() {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/rooms/${roomId}`);
+      const res = await fetch(`${API_URL}/api/rooms/${roomId}`);
       if (!res.ok) {
         setError("Room not found. Check the code and try again.");
         return;
