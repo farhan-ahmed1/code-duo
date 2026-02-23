@@ -22,7 +22,7 @@ export default function LandingFooter() {
       <ul className="footer-links">
         <li><a href="#">Docs</a></li>
         <li>
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+          <a href="https://github.com/farhan-ahmed1/code-duo" target="_blank" rel="noopener noreferrer">
             GitHub
           </a>
         </li>

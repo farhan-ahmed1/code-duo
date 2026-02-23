@@ -26,7 +26,7 @@ export default function CtaSection({ onCreateRoom }: CtaSectionProps) {
               </svg>
             </button>
             <a
-              href="https://github.com"
+              href="https://github.com/farhan-ahmed1/code-duo"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-secondary-lg"
