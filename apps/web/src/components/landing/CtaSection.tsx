@@ -19,9 +19,9 @@ export default function CtaSection({ onCreateRoom }: CtaSectionProps) {
             Just share the link and start collaborating.
           </p>
           <div className="cta-actions">
-            <button onClick={onCreateRoom} className="btn-primary-lg">
+            <button onClick={onCreateRoom} className="btn-primary-lg" aria-label="Start a new coding session">
               Start a session
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </button>
@@ -30,6 +30,7 @@ export default function CtaSection({ onCreateRoom }: CtaSectionProps) {
               target="_blank"
               rel="noopener noreferrer"
               className="btn-secondary-lg"
+              aria-label="View Code Duo source on GitHub (opens in new tab)"
             >
               View on GitHub
             </a>

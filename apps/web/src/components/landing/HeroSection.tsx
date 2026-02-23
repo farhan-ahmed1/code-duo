@@ -20,8 +20,8 @@ export default function HeroSection({ onCreateRoom, onJoinRoom }: HeroSectionPro
           no polling. Just open a room and code.
         </p>
         <div className="hero-actions fade-up delay-4">
-          <button onClick={onCreateRoom} className="btn-primary-lg">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+          <button onClick={onCreateRoom} className="btn-primary-lg" aria-label="Start a new coding session">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
               <path d="M5 3l14 9-14 9V3z" />
             </svg>
             Start a session
@@ -36,8 +36,8 @@ export default function HeroSection({ onCreateRoom, onJoinRoom }: HeroSectionPro
               C
             </span>
           </button>
-          <button onClick={onJoinRoom} className="btn-secondary-lg">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button onClick={onJoinRoom} className="btn-secondary-lg" aria-label="Join an existing room">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" />
             </svg>
             Join room

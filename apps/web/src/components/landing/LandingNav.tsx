@@ -18,7 +18,7 @@ export default function LandingNav({ onCreateRoom, onJoinRoom }: LandingNavProps
   const logoSrc = mounted && resolvedTheme === "light" ? "/logo-light.svg" : "/logo.svg";
 
   return (
-    <nav className="landing-nav">
+    <nav className="landing-nav" aria-label="Main navigation">
       <Link href="/" className="nav-logo">
         <Image src={logoSrc} alt="CodeDuo logo" width={32} height={32} className="nav-logo-img" />
         CodeDuo
@@ -35,10 +35,10 @@ export default function LandingNav({ onCreateRoom, onJoinRoom }: LandingNavProps
       </ul>
       <div className="nav-right">
         <ThemeToggle />
-        <button onClick={onJoinRoom} className="btn-ghost">
-          Join room <span className="kbd">J</span>
+        <button onClick={onJoinRoom} className="btn-ghost" aria-label="Join an existing room">
+          Join room <span className="kbd" aria-hidden="true">J</span>
         </button>
-        <button onClick={onCreateRoom} className="btn-primary">
+        <button onClick={onCreateRoom} className="btn-primary" aria-label="Create a new room">
           Create room{" "}
           <span
             className="kbd"

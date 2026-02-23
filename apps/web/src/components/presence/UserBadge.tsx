@@ -15,6 +15,8 @@ interface UserBadgeProps {
   isLocal?: boolean;
   connectedAt: number;
   onNameChange?: (name: string) => void;
+  /** Scroll editor to this user's cursor position. */
+  onScrollTo?: () => void;
 }
 
 /** Formats a millisecond duration into a human-readable string. */
@@ -32,6 +34,7 @@ export default function UserBadge({
   isLocal = false,
   connectedAt,
   onNameChange,
+  onScrollTo,
 }: UserBadgeProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(user.name);
@@ -79,6 +82,8 @@ export default function UserBadge({
     }
   }
 
+  const isClickable = isLocal ? !isEditing : !!onScrollTo;
+
   const badge = (
     <div
       data-testid="presence-user"
@@ -88,17 +93,34 @@ export default function UserBadge({
         isLocal
           ? "bg-gray-800/60 ring-1 ring-gray-700/40"
           : "hover:bg-gray-800/40",
-        isLocal && !isEditing && "cursor-pointer",
+        isClickable && "cursor-pointer",
       )}
-      onClick={isLocal && !isEditing ? () => setIsEditing(true) : undefined}
-      role={isLocal && !isEditing ? "button" : undefined}
-      tabIndex={isLocal && !isEditing ? 0 : undefined}
+      onClick={
+        isLocal && !isEditing
+          ? () => setIsEditing(true)
+          : !isLocal && onScrollTo
+            ? onScrollTo
+            : undefined
+      }
+      role={isClickable ? "button" : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      aria-label={
+        !isLocal && onScrollTo
+          ? `Scroll to ${user.name}'s cursor`
+          : isLocal && !isEditing
+            ? "Edit your display name"
+            : undefined
+      }
       onKeyDown={
         isLocal && !isEditing
           ? (e) => {
               if (e.key === "Enter" || e.key === " ") setIsEditing(true);
             }
-          : undefined
+          : !isLocal && onScrollTo
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") onScrollTo();
+              }
+            : undefined
       }
     >
       {/* Colored dot matching cursor color */}
@@ -142,6 +164,9 @@ export default function UserBadge({
           <p className="text-muted-foreground">Connected for {elapsed}</p>
           {isLocal && (
             <p className="mt-1 text-muted-foreground">Click to edit name</p>
+          )}
+          {!isLocal && onScrollTo && (
+            <p className="mt-1 text-muted-foreground">Click to jump to cursor</p>
           )}
         </TooltipContent>
       </Tooltip>

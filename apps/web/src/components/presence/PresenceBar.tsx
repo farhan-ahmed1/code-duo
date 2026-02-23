@@ -11,12 +11,15 @@ interface PresenceBarProps {
   awareness: Awareness | null;
   isOpen: boolean;
   onToggle: () => void;
+  /** Called when a remote user is clicked — scrolls the editor to their cursor. */
+  onScrollToUser?: (userId: string) => void;
 }
 
 export default function PresenceBar({
   awareness,
   isOpen,
   onToggle,
+  onScrollToUser,
 }: PresenceBarProps) {
   const { localUser, remoteUsers, setUserName, isNewUser, localConnectedAt } =
     useAwareness(awareness);
@@ -118,6 +121,7 @@ export default function PresenceBar({
             key={user.id}
             user={user}
             connectedAt={user.connectedAt}
+            onScrollTo={onScrollToUser ? () => onScrollToUser(user.id) : undefined}
           />
         ))}
 

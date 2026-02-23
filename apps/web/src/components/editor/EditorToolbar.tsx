@@ -5,8 +5,14 @@ import type { EditorLanguage } from "@code-duo/shared/src/types";
 import { useConnectionStatus } from "@/hooks/useConnectionStatus";
 import ShareLinkButton from "@/components/room/ShareLinkButton";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { WebsocketProvider } from "y-websocket";
-import { Moon, Sun, Users, Home } from "lucide-react";
+import { Moon, Sun, Users, Home, HelpCircle } from "lucide-react";
 import Link from "next/link";
 
 /** Human-readable labels for languages in the dropdown. */
@@ -132,11 +138,30 @@ export default function EditorToolbar({
           <span>{connectedUsers}</span>
         </Badge>
 
-        {/* Connection status */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span className={`h-2 w-2 rounded-full ${statusColor}`} />
-          <span className="hidden sm:inline">{statusLabel}</span>
-        </div>
+        {/* Connection status with "What's this?" tooltip */}
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="flex cursor-help items-center gap-1.5 text-xs text-muted-foreground"
+                role="status"
+                aria-label={`Connection status: ${statusLabel}`}
+              >
+                <span className={`h-2 w-2 rounded-full ${statusColor}`} aria-hidden="true" />
+                <span className="hidden sm:inline">{statusLabel}</span>
+                <HelpCircle className="h-3 w-3 opacity-50" aria-hidden="true" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs text-xs">
+              <p className="font-medium">Powered by CRDTs (Conflict-free Replicated Data Types)</p>
+              <p className="mt-1 text-muted-foreground">
+                Your edits are synced in real-time using Yjs, a CRDT library that
+                guarantees all collaborators converge to the same document state —
+                even after network interruptions. No server-side conflict resolution needed.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
         {/* Share link */}
         <ShareLinkButton roomId={roomId} />

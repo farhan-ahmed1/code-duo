@@ -3,19 +3,51 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "CodeDuo — Real-time collaborative coding",
+  title: {
+    default: "Code Duo — Real-time Collaborative Coding",
+    template: "%s | Code Duo",
+  },
   description:
-    "Real-time collaborative editing powered by CRDTs. No merge hell, no polling. Just open a room and code.",
+    "Real-time collaborative code editor powered by CRDTs. No merge conflicts, no polling. Open a room and start coding together instantly.",
+  keywords: [
+    "collaborative coding",
+    "real-time editor",
+    "pair programming",
+    "CRDT",
+    "Yjs",
+    "Monaco Editor",
+    "code editor",
+    "live cursors",
+  ],
+  authors: [{ name: "Code Duo" }],
+  creator: "Code Duo",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000",
+  ),
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
     apple: "/favicon.svg",
   },
+  manifest: "/manifest.json",
   openGraph: {
-    title: "CodeDuo — Real-time collaborative coding",
+    type: "website",
+    siteName: "Code Duo",
+    title: "Code Duo — Real-time Collaborative Coding",
     description:
-      "Real-time collaborative editing powered by CRDTs. No merge hell, no polling. Just open a room and code.",
-    images: [{ url: "/logo.svg" }],
+      "Real-time collaborative code editor powered by CRDTs. No merge conflicts, no polling. Open a room and start coding together.",
+    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "Code Duo — Real-time collaborative coding" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Code Duo — Real-time Collaborative Coding",
+    description:
+      "Real-time collaborative code editor powered by CRDTs. No merge conflicts, no polling.",
+    images: ["/og-image.svg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

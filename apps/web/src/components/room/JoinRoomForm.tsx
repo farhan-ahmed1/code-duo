@@ -61,6 +61,9 @@ export default function JoinRoomForm() {
           }}
           placeholder="Paste a room code or URL…"
           className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60 text-sm h-8"
+          aria-label="Room code or URL"
+          aria-invalid={!!error}
+          aria-describedby={error ? "join-error" : undefined}
         />
         <Button
           type="submit"
@@ -88,7 +91,7 @@ export default function JoinRoomForm() {
         </Button>
       </div>
       {error && (
-        <p className="mt-1.5 px-1 text-xs text-destructive font-medium">
+        <p id="join-error" role="alert" className="mt-1.5 px-1 text-xs text-destructive font-medium">
           {error}
         </p>
       )}

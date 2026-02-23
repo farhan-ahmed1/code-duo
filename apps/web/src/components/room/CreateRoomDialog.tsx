@@ -70,23 +70,26 @@ export default function CreateRoomDialog({
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <label htmlFor="room-name" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Room Name
             </label>
             <Input
+              id="room-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="My Coding Session"
               className="bg-secondary border-border focus-visible:ring-primary"
+              aria-required="false"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <label htmlFor="room-language" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Language
             </label>
             <select
+              id="room-language"
               value={language}
               onChange={(e) => setLanguage(e.target.value as EditorLanguage)}
               className="flex h-9 w-full rounded-md border border-border bg-secondary px-3 py-1 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"

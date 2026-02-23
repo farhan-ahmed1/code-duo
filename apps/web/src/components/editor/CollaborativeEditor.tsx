@@ -18,6 +18,9 @@ interface CollaborativeEditorProps {
   provider: WebsocketProvider | null;
   language: EditorLanguage;
   theme: "vs-dark" | "light";
+  /** Callback fired when the Monaco editor instance is ready. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onEditorReady?: (editor: any) => void;
 }
 
 /**
@@ -36,6 +39,7 @@ export default function CollaborativeEditor({
   provider,
   language,
   theme,
+  onEditorReady,
 }: CollaborativeEditorProps) {
   const { status } = useConnectionStatus(provider);
   const bindingRef = useRef<MonacoBinding | null>(null);
@@ -43,6 +47,7 @@ export default function CollaborativeEditor({
   const [editorInstance, setEditorInstance] = useState<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [monacoInstance, setMonacoInstance] = useState<any>(null);
+  const [isEmpty, setIsEmpty] = useState(true);
 
   // Create the y-monaco binding once the editor, ytext, and awareness are all available.
   useEffect(() => {
@@ -74,14 +79,31 @@ export default function CollaborativeEditor({
     monacoInstance.editor.setModelLanguage(model, language);
   }, [language, editorInstance, monacoInstance]);
 
+  // Track whether the editor content is empty for the placeholder overlay
+  useEffect(() => {
+    if (!editorInstance) return;
+    const model = editorInstance.getModel();
+    if (!model) return;
+
+    function checkEmpty() {
+      setIsEmpty(model.getValue().length === 0);
+    }
+    checkEmpty();
+    const disposable = model.onDidChangeContent(checkEmpty);
+    return () => disposable.dispose();
+  }, [editorInstance]);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function handleEditorMount(editor: any, monaco: any) {
     setEditorInstance(editor);
     setMonacoInstance(monaco);
+    // Auto-focus the editor when entering a room
+    editor.focus();
+    onEditorReady?.(editor);
   }
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full" role="region" aria-label="Collaborative code editor">
       {/* Subtle offline banner */}
       {status === "disconnected" && (
         <div
@@ -133,6 +155,15 @@ export default function CollaborativeEditor({
           </div>
         }
       />
+      {/* Empty state placeholder */}
+      {isEmpty && editorInstance && (
+        <div
+          className="pointer-events-none absolute left-16 top-1 select-none text-sm text-muted-foreground/40 font-mono"
+          aria-hidden="true"
+        >
+          Start typing to begin collaborating...
+        </div>
+      )}
       <CursorOverlay
         awareness={awareness}
         ytext={ytext}
