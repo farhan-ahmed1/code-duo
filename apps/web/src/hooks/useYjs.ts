@@ -1,44 +1,50 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { YJS_TEXT_KEY } from '@code-duo/shared/src/constants';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://localhost:4000';
+// Server accepts WebSocket upgrades only on /yjs/* paths
+const WS_BASE = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://localhost:4000';
+const WS_URL = `${WS_BASE}/yjs`;
 
 export function useYjs(roomId: string) {
-  const ydocRef = useRef<Y.Doc | null>(null);
-  const providerRef = useRef<WebsocketProvider | null>(null);
+  const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
+  const [provider, setProvider] = useState<WebsocketProvider | null>(null);
+  const [ytext, setYtext] = useState<Y.Text | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const ydoc = new Y.Doc();
-    ydocRef.current = ydoc;
+    const doc = new Y.Doc();
+    const text = doc.getText(YJS_TEXT_KEY);
 
     // Local persistence for offline support and instant load
-    const indexeddb = new IndexeddbPersistence(roomId, ydoc);
+    const indexeddb = new IndexeddbPersistence(roomId, doc);
 
-    // Remote WebSocket sync
-    const provider = new WebsocketProvider(WS_URL, roomId, ydoc);
-    providerRef.current = provider;
+    // Remote WebSocket sync — connects to ws://host/yjs/<roomId>
+    const wsProvider = new WebsocketProvider(WS_URL, roomId, doc);
 
-    provider.on('status', ({ status }: { status: string }) => {
+    wsProvider.on('status', ({ status }: { status: string }) => {
       setIsConnected(status === 'connected');
     });
 
+    // Set state so consumers re-render and pick up live instances
+    setYdoc(doc);
+    setProvider(wsProvider);
+    setYtext(text);
+
     return () => {
       indexeddb.destroy();
-      provider.destroy();
-      ydoc.destroy();
+      wsProvider.destroy();
+      doc.destroy();
+      setYdoc(null);
+      setProvider(null);
+      setYtext(null);
+      setIsConnected(false);
     };
   }, [roomId]);
 
-  return {
-    ydoc: ydocRef.current,
-    provider: providerRef.current,
-    ytext: ydocRef.current?.getText(YJS_TEXT_KEY) ?? null,
-    isConnected,
-  };
+  return { ydoc, provider, ytext, isConnected };
 }

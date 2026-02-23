@@ -2,9 +2,14 @@
 
 import { useAwareness } from '@/hooks/useAwareness';
 import UserBadge from './UserBadge';
+import type { Awareness } from 'y-protocols/awareness';
 
-export default function PresenceBar() {
-  const { localUser, remoteUsers } = useAwareness();
+interface PresenceBarProps {
+  awareness: Awareness | null;
+}
+
+export default function PresenceBar({ awareness }: PresenceBarProps) {
+  const { localUser, remoteUsers } = useAwareness(awareness);
   const allUsers = localUser ? [{ ...localUser, isLocal: true }, ...remoteUsers.map(u => ({ ...u, isLocal: false }))] : [];
 
   return (

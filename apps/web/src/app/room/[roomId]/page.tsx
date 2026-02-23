@@ -1,23 +1,11 @@
-import CollaborativeEditor from '@/components/editor/CollaborativeEditor';
-import PresenceBar from '@/components/presence/PresenceBar';
-import EditorToolbar from '@/components/editor/EditorToolbar';
+import RoomClient from './RoomClient';
 
 interface RoomPageProps {
-  params: { roomId: string };
+  params: Promise<{ roomId: string }>;
 }
 
-export default function RoomPage({ params }: RoomPageProps) {
-  const { roomId } = params;
+export default async function RoomPage({ params }: RoomPageProps) {
+  const { roomId } = await params;
 
-  return (
-    <div className="flex h-screen flex-col bg-gray-950">
-      <EditorToolbar roomId={roomId} />
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-hidden">
-          <CollaborativeEditor roomId={roomId} />
-        </div>
-        <PresenceBar />
-      </div>
-    </div>
-  );
+  return <RoomClient roomId={roomId} />;
 }

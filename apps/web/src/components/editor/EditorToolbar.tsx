@@ -3,13 +3,15 @@
 import { SUPPORTED_LANGUAGES } from '@code-duo/shared/src/constants';
 import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 import ShareLinkButton from '@/components/room/ShareLinkButton';
+import type { WebsocketProvider } from 'y-websocket';
 
 interface EditorToolbarProps {
   roomId: string;
+  provider: WebsocketProvider | null;
 }
 
-export default function EditorToolbar({ roomId }: EditorToolbarProps) {
-  const { status } = useConnectionStatus();
+export default function EditorToolbar({ roomId, provider }: EditorToolbarProps) {
+  const { status } = useConnectionStatus(provider);
 
   const statusColor =
     status === 'connected'
