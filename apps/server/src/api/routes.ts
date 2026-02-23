@@ -9,12 +9,21 @@ import {
   validateRoomName,
   validateLanguage,
 } from "./validation";
+import { logger } from "../utils/logger";
+import { metricsRegistry, activeConnections, activeRooms } from "../utils/metrics";
 
 const roomStore = new RoomStore();
 export const apiRouter = new Hono();
 
 // Export for use by the cleanup job
 export { roomStore };
+
+// ── Readiness gate ─────────────────────────────────────────────────
+// Flipped to true once the server has fully initialised (called from index.ts).
+let serverReady = false;
+export function markServerReady() {
+  serverReady = true;
+}
 
 /** POST /api/rooms — create a new room */
 apiRouter.post("/rooms", roomCreationRateLimit, async (c) => {
@@ -40,6 +49,12 @@ apiRouter.post("/rooms", roomCreationRateLimit, async (c) => {
   const language = langResult.language ?? DEFAULT_LANGUAGE;
 
   const room = roomStore.createRoom(name, language);
+
+  logger.info(
+    { roomId: room.id, name, language, event: "room_created" },
+    "Room created via API",
+  );
+
   return c.json({ ...room, url: `/room/${room.id}` }, 201);
 });
 
@@ -61,11 +76,85 @@ apiRouter.get("/rooms", (c) => {
   return c.json({ data: rooms, limit, offset });
 });
 
-/** GET /api/health — health check */
+// ── Observability endpoints ────────────────────────────────────────
+
+/**
+ * GET /api/health — comprehensive health check.
+ *
+ * Returns database connectivity, active rooms/connections, memory
+ * usage, and uptime.
+ */
 apiRouter.get("/health", (c) => {
+  let dbHealthy = true;
+  try {
+    // Quick connectivity probe — a lightweight read that exercises the
+    // SQLite connection without returning meaningful data.
+    roomStore.listRooms(1, 0);
+  } catch {
+    dbHealthy = false;
+  }
+
+  const mem = process.memoryUsage();
+
   return c.json({
-    status: "healthy",
+    status: dbHealthy ? "healthy" : "degraded",
     uptime: Math.floor(process.uptime()),
-    memory: process.memoryUsage(),
+    database: dbHealthy ? "connected" : "unreachable",
+    connections: {
+      active: getGaugeValue(activeConnections),
+      rooms: getGaugeValue(activeRooms),
+    },
+    memory: {
+      rss: mem.rss,
+      heapUsed: mem.heapUsed,
+      heapTotal: mem.heapTotal,
+      external: mem.external,
+    },
   });
 });
+
+/**
+ * GET /api/health/ready — readiness probe.
+ *
+ * Returns 200 only when the server is fully initialised (WebSocket
+ * server attached, cleanup job started, metrics collector running).
+ * Useful for container orchestrators (k8s readinessProbe, Docker
+ * HEALTHCHECK, etc.).
+ */
+apiRouter.get("/health/ready", (c) => {
+  if (!serverReady) {
+    return c.json({ ready: false }, 503);
+  }
+  return c.json({ ready: true, uptime: Math.floor(process.uptime()) });
+});
+
+/**
+ * GET /metrics — Prometheus scrape endpoint.
+ *
+ * Returns all registered metrics in the Prometheus exposition format.
+ * This endpoint is intentionally outside the `/api` prefix so the
+ * rate-limiter and body-size middleware do not interfere with scraping.
+ */
+apiRouter.get("/metrics", async (c) => {
+  const metrics = await metricsRegistry.metrics();
+  return c.text(metrics, 200, {
+    "Content-Type": metricsRegistry.contentType,
+  });
+});
+
+// ── Helpers ────────────────────────────────────────────────────────
+
+/** Safely read the current value from a prom-client Gauge. */
+function getGaugeValue(
+  gauge: import("prom-client").Gauge,
+): number {
+  try {
+    // prom-client exposes an internal hashMap; fall back to 0 if
+    // the private API changes.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const internal = gauge as any;
+    return Number(internal.hashMap?.[""]?.value ?? 0);
+  } catch {
+    return 0;
+  }
+}

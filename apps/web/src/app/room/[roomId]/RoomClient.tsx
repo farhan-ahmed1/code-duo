@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import { useYjs } from "@/hooks/useYjs";
 import { useRoom } from "@/hooks/useRoom";
 import { useAwareness } from "@/hooks/useAwareness";
+import { useConnectionStatus } from "@/hooks/useConnectionStatus";
+import { usePerformanceMetrics } from "@/hooks/usePerformanceMetrics";
 import { useEditorStore } from "@/stores/editor-store";
 import CollaborativeEditor from "@/components/editor/CollaborativeEditor";
 import EditorToolbar from "@/components/editor/EditorToolbar";
 import PresenceBar from "@/components/presence/PresenceBar";
+import DebugPanel from "@/components/editor/DebugPanel";
 import type { EditorLanguage } from "@code-duo/shared/src/types";
 import { Users } from "lucide-react";
 
@@ -19,6 +22,8 @@ export default function RoomClient({ roomId }: RoomClientProps) {
   const { ydoc, provider, ytext, awareness } = useYjs(roomId);
   const { language, setLanguage } = useRoom(roomId, ydoc);
   const { remoteUsers } = useAwareness(awareness);
+  const { status: connectionStatus, syncStatus } = useConnectionStatus(provider);
+  const { metrics } = usePerformanceMetrics(provider, ydoc);
 
   const theme = useEditorStore((s) => s.theme);
   const toggleTheme = useEditorStore((s) => s.toggleTheme);
@@ -26,6 +31,19 @@ export default function RoomClient({ roomId }: RoomClientProps) {
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [debugOpen, setDebugOpen] = useState(false);
+
+  // Toggle debug panel with Ctrl/Cmd + Shift + D
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        setDebugOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Keep the Zustand store in sync with the Y.Map language so any
   // component reading from the store sees the shared value.
@@ -111,6 +129,15 @@ export default function RoomClient({ roomId }: RoomClientProps) {
             <span>{connectedUsers}</span>
           </button>
         )}
+
+        {/* Debug panel — toggled via Ctrl/Cmd + Shift + D */}
+        <DebugPanel
+          metrics={metrics}
+          connectionStatus={connectionStatus}
+          syncStatus={syncStatus}
+          visible={debugOpen}
+          onClose={() => setDebugOpen(false)}
+        />
       </div>
     </div>
   );

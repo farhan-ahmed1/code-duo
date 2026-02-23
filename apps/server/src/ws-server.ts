@@ -3,7 +3,7 @@ import { IncomingMessage } from "node:http";
 import { setupWSConnection, setPersistence } from "y-websocket/bin/utils";
 import { DocumentStore } from "./persistence/document-store";
 import { RoomStore } from "./persistence/room-store";
-import { logger } from "./utils/logger";
+import { logger, createContextLogger } from "./utils/logger";
 import {
   activeConnections,
   activeRooms,
@@ -32,10 +32,12 @@ function scheduleSave(roomId: string, ydoc: Y.Doc) {
   if (existing) clearTimeout(existing);
 
   const timer = setTimeout(() => {
+    const start = performance.now();
     const state = Y.encodeStateAsUpdate(ydoc);
     documentStore.saveDocument(roomId, state);
     documentSavesTotal.inc();
-    logger.info({ roomId }, "Document persisted");
+    const duration = Math.round(performance.now() - start);
+    logger.info({ roomId, event: "doc_persist", duration, bytes: state.byteLength }, "Document persisted");
     saveTimers.delete(roomId);
   }, DOCUMENT_DEBOUNCE_MS);
 
@@ -47,19 +49,23 @@ function scheduleSave(roomId: string, ydoc: Y.Doc) {
 // writeState: called when the last client disconnects — triggers a final save.
 setPersistence({
   bindState: async (roomId: string, ydoc: Y.Doc) => {
+    const start = performance.now();
     const saved = documentStore.loadDocument(roomId);
     if (saved) {
       Y.applyUpdate(ydoc, saved);
-      logger.info({ roomId }, "Document state restored from storage");
+      const duration = Math.round(performance.now() - start);
+      logger.info({ roomId, event: "doc_restore", duration, bytes: saved.byteLength }, "Document state restored from storage");
     }
     // Schedule incremental saves on every update
     ydoc.on("update", () => scheduleSave(roomId, ydoc));
   },
   writeState: async (roomId: string, ydoc: Y.Doc) => {
+    const start = performance.now();
     const state = Y.encodeStateAsUpdate(ydoc);
     documentStore.saveDocument(roomId, state);
     documentSavesTotal.inc();
-    logger.info({ roomId }, "Document state flushed on last disconnect");
+    const duration = Math.round(performance.now() - start);
+    logger.info({ roomId, event: "doc_flush", duration, bytes: state.byteLength }, "Document state flushed on last disconnect");
   },
 });
 
@@ -67,6 +73,7 @@ export function setupWebSocketServer(wss: WebSocketServer) {
   wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
     const url = req.url ?? "/";
     const roomId = getRoomNameFromUrl(url);
+    const log = createContextLogger({ roomId });
 
     // Track connection counts
     const count = (roomConnectionCounts.get(roomId) ?? 0) + 1;
@@ -74,7 +81,7 @@ export function setupWebSocketServer(wss: WebSocketServer) {
     activeConnections.inc();
     if (count === 1) activeRooms.inc();
 
-    logger.info({ roomId, totalInRoom: count }, "Client connected");
+    log.info({ event: "ws_connect", totalInRoom: count }, "Client connected");
 
     // Update accessed_at so the room survives expiration cleanup
     roomStore.touchRoom(roomId);
@@ -100,11 +107,11 @@ export function setupWebSocketServer(wss: WebSocketServer) {
         activeRooms.dec();
         roomConnectionCounts.delete(roomId);
       }
-      logger.info({ roomId, remaining }, "Client disconnected");
+      log.info({ event: "ws_disconnect", remaining }, "Client disconnected");
     });
 
     ws.on("error", (err) => {
-      logger.error({ roomId, err }, "WebSocket error");
+      log.error({ err, event: "ws_error" }, "WebSocket error");
     });
   });
 }
