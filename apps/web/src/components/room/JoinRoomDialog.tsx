@@ -20,10 +20,10 @@ export default function JoinRoomDialog({
 }: JoinRoomDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-white/[0.08] bg-[#1e1e2e] sm:max-w-md">
+      <DialogContent className="border-border bg-card sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-white/90">Join a room</DialogTitle>
-          <DialogDescription className="text-white/40">
+          <DialogTitle className="text-foreground">Join a room</DialogTitle>
+          <DialogDescription>
             Paste a room code or full URL to jump straight in.
           </DialogDescription>
         </DialogHeader>
