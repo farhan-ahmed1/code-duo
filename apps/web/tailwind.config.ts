@@ -6,8 +6,9 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        mono: ["var(--font-mono)", "JetBrains Mono", "Fira Code", "monospace"],
+        sans: ["'Geist'", "system-ui", "sans-serif"],
+        mono: ["'Geist Mono'", "'JetBrains Mono'", "'Fira Code'", "monospace"],
+        display: ["'Instrument Serif'", "serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
