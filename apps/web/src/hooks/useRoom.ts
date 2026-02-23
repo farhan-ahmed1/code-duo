@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { YJS_SETTINGS_KEY } from "@code-duo/shared/src/constants";
 import type { EditorLanguage, Room } from "@code-duo/shared/src/types";
 import * as Y from "yjs";
@@ -12,6 +12,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
  * language in sync via a shared Yjs `Y.Map`.
  *
  * On mount, it fetches the room's initial language from `GET /api/rooms/:id`.
+ * If the Y.Map doesn't already contain a `language` key (first load for
+ * the room), the hook seeds it with the value from the REST API so that
+ * every subsequent observer picks up the correct initial language.
+ *
  * It then observes the `"settings"` Y.Map on the shared document so that
  * language changes made by any user propagate to all peers in real time.
  *
@@ -25,22 +29,39 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 export function useRoom(roomId: string, ydoc: Y.Doc | null) {
   const [room, setRoom] = useState<Room | null>(null);
   const [language, setLanguageState] = useState<EditorLanguage>("typescript");
+  const seededRef = useRef(false);
 
-  // Fetch room metadata on mount
+  // Fetch room metadata on mount and seed Y.Map if empty
   useEffect(() => {
+    seededRef.current = false;
+
     fetch(`${API_URL}/api/rooms/${roomId}`)
       .then((res) => res.json())
       .then((data: Room) => {
         setRoom(data);
         setLanguageState(data.language);
+
+        // Seed the shared Y.Map with the API language when it hasn't been
+        // set yet (first user to open the room since the doc was created).
+        if (ydoc && !seededRef.current) {
+          const settings = ydoc.getMap<string>(YJS_SETTINGS_KEY);
+          if (!settings.has("language")) {
+            settings.set("language", data.language);
+          }
+          seededRef.current = true;
+        }
       })
       .catch(console.error);
-  }, [roomId]);
+  }, [roomId, ydoc]);
 
   // Observe Y.Map for real-time language changes
   useEffect(() => {
     if (!ydoc) return;
     const settings = ydoc.getMap<string>(YJS_SETTINGS_KEY);
+
+    // Pick up any existing value that was set before this observer was registered
+    const existing = settings.get("language") as EditorLanguage | undefined;
+    if (existing) setLanguageState(existing);
 
     function handleChange() {
       const lang = settings.get("language") as EditorLanguage | undefined;
@@ -51,6 +72,7 @@ export function useRoom(roomId: string, ydoc: Y.Doc | null) {
     return () => settings.unobserve(handleChange);
   }, [ydoc]);
 
+  /** Update the language in the shared Y.Map, broadcasting to all peers. */
   function setLanguage(lang: EditorLanguage) {
     if (!ydoc) return;
     const settings = ydoc.getMap<string>(YJS_SETTINGS_KEY);
