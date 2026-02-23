@@ -37,6 +37,7 @@ export interface User {
 
 export interface UserAwarenessState {
   user: User;
+  connectedAt?: number;
   cursorPosition?: {
     index: number;
     length: number;
