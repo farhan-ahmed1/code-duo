@@ -6,6 +6,7 @@ import type { User, UserAwarenessState } from "@code-duo/shared/src/types";
 import { generateColor } from "@/lib/colors";
 
 const STORAGE_KEY = "code-duo:username";
+const STORAGE_KEY_ID = "code-duo:userid";
 const NAME_SET_KEY = "code-duo:name-customised";
 
 /** User enriched with connection timestamp for presence display. */
@@ -13,7 +14,21 @@ export interface PresenceUser extends User {
   connectedAt: number;
 }
 
-function getOrCreateUser(clientId: number): { user: User; isNew: boolean } {
+/**
+ * Returns (or creates) a stable user ID that persists across page reloads.
+ * This is intentionally decoupled from the ephemeral Yjs clientID so that
+ * the same browser session always announces the same identity.
+ */
+function getOrCreateStableId(): string {
+  const stored = localStorage.getItem(STORAGE_KEY_ID);
+  if (stored) return stored;
+  const id = crypto.randomUUID();
+  localStorage.setItem(STORAGE_KEY_ID, id);
+  return id;
+}
+
+function getOrCreateUser(): { user: User; isNew: boolean } {
+  const id = getOrCreateStableId();
   const storedName = localStorage.getItem(STORAGE_KEY);
   const hasCustomised = localStorage.getItem(NAME_SET_KEY) === "true";
   const isNew = !hasCustomised;
@@ -23,7 +38,8 @@ function getOrCreateUser(clientId: number): { user: User; isNew: boolean } {
   if (!storedName) localStorage.setItem(STORAGE_KEY, name);
 
   return {
-    user: { id: String(clientId), name, color: generateColor(clientId) },
+    // Use the stable ID — color is derived from it so it never changes across reloads
+    user: { id, name, color: generateColor(id) },
     isNew,
   };
 }
@@ -58,26 +74,48 @@ export function useAwareness(awareness: Awareness | null) {
     const connectedAt = Date.now();
     connectedAtRef.current = connectedAt;
 
-    const { user, isNew } = getOrCreateUser(aw.clientID);
+    const { user, isNew } = getOrCreateUser();
     setLocalUser(user);
     setIsNewUser(isNew);
 
     aw.setLocalStateField("user", user);
     aw.setLocalStateField("connectedAt", connectedAt);
 
+    // Capture local stable ID so handleChange can exclude stale ghost
+    // entries from previous reloads of this same browser session. Those
+    // ghosts have a different Yjs clientID but the same stable user.id.
+    const localStableId = user.id;
+
     function handleChange() {
       const states = Array.from(aw.getStates().entries()) as [
         number,
         UserAwarenessState,
       ][];
-      const remote = states
-        .filter(([id]) => id !== aw.clientID)
-        .map(([, state]) => ({
-          ...(state.user ?? {}),
+
+      // Build a deduplicated map keyed by the stable user.id.
+      // Filter out: (a) the current Yjs clientID (local session), and
+      // (b) any stale ghost entries that share our stable ID — these are
+      // leftover awareness entries from previous reloads whose WebSocket
+      // closed before the awareness-null message could be sent.
+      const byStableId = new Map<string, PresenceUser>();
+
+      for (const [clientId, state] of states) {
+        if (clientId === aw.clientID) continue;
+        if (!state.user?.name) continue;
+        if (state.user.id === localStableId) continue; // ghost from prior reload
+
+        const candidate: PresenceUser = {
+          ...state.user,
           connectedAt: state.connectedAt ?? Date.now(),
-        }))
-        .filter((u): u is PresenceUser => Boolean(u.name));
-      setRemoteUsers(remote);
+        };
+
+        const existing = byStableId.get(state.user.id);
+        if (!existing || candidate.connectedAt > existing.connectedAt) {
+          byStableId.set(state.user.id, candidate);
+        }
+      }
+
+      setRemoteUsers(Array.from(byStableId.values()));
     }
 
     aw.on("change", handleChange);
