@@ -56,21 +56,28 @@ export default function EditorToolbar({
   onThemeToggle,
   connectedUsers,
 }: EditorToolbarProps) {
-  const { status } = useConnectionStatus(provider);
+  const { status, syncStatus } = useConnectionStatus(provider);
 
-  const statusColor =
-    status === "connected"
-      ? "bg-green-500"
-      : status === "connecting"
-        ? "bg-yellow-500"
-        : "bg-red-500";
+  // Derive the visual indicator from both connection and sync state:
+  //  - Green: connected AND initial sync complete
+  //  - Yellow: connecting, OR connected but still syncing
+  //  - Red: disconnected (offline)
+  const isSyncing =
+    status === "connecting" ||
+    (status === "connected" && syncStatus === "syncing");
 
-  const statusLabel =
-    status === "connected"
-      ? "Connected"
-      : status === "connecting"
-        ? "Connecting…"
-        : "Offline — edits will sync when reconnected";
+  const statusColor = (() => {
+    if (status === "disconnected") return "bg-red-500";
+    if (isSyncing) return "bg-yellow-500";
+    return "bg-green-500";
+  })();
+
+  const statusLabel = (() => {
+    if (status === "disconnected")
+      return "Offline — edits will sync when reconnected";
+    if (isSyncing) return "Syncing…";
+    return "Connected";
+  })();
 
   return (
     <header className="flex h-12 items-center gap-4 border-b border-gray-800 bg-gray-900 px-4">

@@ -69,6 +69,7 @@ export default function RoomClient({ roomId }: RoomClientProps) {
           <CollaborativeEditor
             ytext={ytext}
             awareness={awareness}
+            provider={provider}
             language={language}
             theme={theme}
           />

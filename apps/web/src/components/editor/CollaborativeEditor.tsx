@@ -7,12 +7,15 @@ import type * as Y from "yjs";
 import type { Awareness } from "y-protocols/awareness";
 import type { EditorLanguage } from "@code-duo/shared/src/types";
 import CursorOverlay from "./CursorOverlay";
+import { useConnectionStatus } from "@/hooks/useConnectionStatus";
+import type { WebsocketProvider } from "y-websocket";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
 interface CollaborativeEditorProps {
   ytext: Y.Text | null;
   awareness: Awareness | null;
+  provider: WebsocketProvider | null;
   language: EditorLanguage;
   theme: "vs-dark" | "light";
 }
@@ -30,9 +33,11 @@ interface CollaborativeEditorProps {
 export default function CollaborativeEditor({
   ytext,
   awareness,
+  provider,
   language,
   theme,
 }: CollaborativeEditorProps) {
+  const { status } = useConnectionStatus(provider);
   const bindingRef = useRef<MonacoBinding | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editorInstance, setEditorInstance] = useState<any>(null);
@@ -77,6 +82,16 @@ export default function CollaborativeEditor({
 
   return (
     <div className="relative h-full w-full">
+      {/* Subtle offline banner */}
+      {status === "disconnected" && (
+        <div
+          role="alert"
+          className="flex items-center gap-2 bg-red-900/80 px-3 py-1.5 text-xs text-red-200"
+        >
+          <span className="h-2 w-2 shrink-0 rounded-full bg-red-400" />
+          Offline — your edits are saved locally and will sync when reconnected
+        </div>
+      )}
       <Editor
         height="100%"
         defaultLanguage={language}

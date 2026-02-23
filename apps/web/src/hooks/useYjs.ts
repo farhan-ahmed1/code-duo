@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { IndexeddbPersistence } from "y-indexeddb";
-import { YJS_TEXT_KEY } from "@code-duo/shared/src/constants";
+import { YJS_TEXT_KEY, WS_RECONNECT_CONFIG } from "@code-duo/shared/src/constants";
 
 // Server accepts WebSocket upgrades only on /yjs/* paths
 const WS_BASE = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:4000";
@@ -36,7 +36,10 @@ export function useYjs(roomId: string) {
     const indexeddb = new IndexeddbPersistence(roomId, doc);
 
     // Remote WebSocket sync — connects to ws://host/yjs/<roomId>
-    const wsProvider = new WebsocketProvider(WS_URL, roomId, doc);
+    // Reconnection uses exponential backoff configured in shared constants.
+    const wsProvider = new WebsocketProvider(WS_URL, roomId, doc, {
+      maxBackoffTime: WS_RECONNECT_CONFIG.maxBackoffTime,
+    });
 
     wsProvider.on("status", ({ status }: { status: string }) => {
       setIsConnected(status === "connected");
