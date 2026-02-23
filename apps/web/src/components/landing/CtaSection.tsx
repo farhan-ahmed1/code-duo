@@ -1,0 +1,44 @@
+"use client";
+
+interface CtaSectionProps {
+  onCreateRoom: () => void;
+}
+
+export default function CtaSection({ onCreateRoom }: CtaSectionProps) {
+  return (
+    <section className="cta-section">
+      <div className="container">
+        <div className="cta-box">
+          <h2>
+            Ready to code
+            <br />
+            <em>together?</em>
+          </h2>
+          <p>
+            Create a room in seconds. No sign-up, no setup, no friction.
+            Just share the link and start collaborating.
+          </p>
+          <div className="cta-actions">
+            <button onClick={onCreateRoom} className="btn-primary-lg">
+              Start a session
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </button>
+            <a
+              href="https://github.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary-lg"
+            >
+              View on GitHub
+            </a>
+          </div>
+          <p className="cta-note">
+            Free &amp; open source — no account required
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
