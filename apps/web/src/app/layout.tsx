@@ -5,6 +5,17 @@ export const metadata: Metadata = {
   title: "CodeDuo — Real-time collaborative coding",
   description:
     "Real-time collaborative editing powered by CRDTs. No merge hell, no polling. Just open a room and code.",
+  icons: {
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/logo.svg",
+  },
+  openGraph: {
+    title: "CodeDuo — Real-time collaborative coding",
+    description:
+      "Real-time collaborative editing powered by CRDTs. No merge hell, no polling. Just open a room and code.",
+    images: [{ url: "/logo.svg" }],
+  },
 };
 
 export default function RootLayout({

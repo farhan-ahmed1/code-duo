@@ -1,11 +1,11 @@
+import Image from "next/image";
+
 export default function LandingFooter() {
   return (
     <footer className="landing-footer">
       <div className="footer-left">
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div className="nav-logo-icon" style={{ width: "18px", height: "18px", fontSize: "8px" }}>
-            cd
-          </div>
+          <Image src="/logo.svg" alt="CodeDuo logo" width={20} height={20} className="nav-logo-img" />
           <span>CodeDuo</span>
         </div>
         <span>© 2026</span>

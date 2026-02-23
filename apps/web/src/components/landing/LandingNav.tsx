@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 interface LandingNavProps {
   onCreateRoom: () => void;
@@ -10,7 +11,7 @@ export default function LandingNav({ onCreateRoom }: LandingNavProps) {
   return (
     <nav className="landing-nav">
       <Link href="/" className="nav-logo">
-        <div className="nav-logo-icon">cd</div>
+        <Image src="/logo.svg" alt="CodeDuo logo" width={28} height={28} className="nav-logo-img" />
         CodeDuo
       </Link>
       <ul className="nav-links">
