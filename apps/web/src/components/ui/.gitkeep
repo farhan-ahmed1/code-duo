@@ -1,0 +1,2 @@
+# shadcn/ui components are auto-generated here via `npx shadcn-ui@latest add <component>`
+# Run: npx shadcn-ui@latest add button dialog input badge tooltip
