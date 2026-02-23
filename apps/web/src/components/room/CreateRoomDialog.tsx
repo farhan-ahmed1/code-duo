@@ -7,6 +7,15 @@ import {
   DEFAULT_LANGUAGE,
 } from "@code-duo/shared/src/constants";
 import type { EditorLanguage } from "@code-duo/shared/src/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface CreateRoomDialogProps {
   open: boolean;
@@ -22,8 +31,6 @@ export default function CreateRoomDialog({
   const [language, setLanguage] = useState<EditorLanguage>(DEFAULT_LANGUAGE);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  if (!open) return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,55 +57,78 @@ export default function CreateRoomDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-md rounded-lg bg-gray-900 p-6 shadow-xl">
-        <h2 className="mb-4 text-lg font-semibold">Create a Room</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="mb-1 block text-sm text-gray-400">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="border-border bg-card sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-foreground">Create a Room</DialogTitle>
+          <DialogDescription>
+            Set up a collaborative coding session. Choose a name and language.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Room Name
             </label>
-            <input
+            <Input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="My Coding Session"
-              className="w-full rounded bg-gray-800 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-indigo-500"
+              className="bg-secondary border-border focus-visible:ring-primary"
             />
           </div>
-          <div>
-            <label className="mb-1 block text-sm text-gray-400">Language</label>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Language
+            </label>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as EditorLanguage)}
-              className="w-full rounded bg-gray-800 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-indigo-500"
+              className="flex h-9 w-full rounded-md border border-border bg-secondary px-3 py-1 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {lang}
+                <option key={lang} value={lang} className="bg-card text-foreground">
+                  {lang.charAt(0).toUpperCase() + lang.slice(1)}
                 </option>
               ))}
             </select>
           </div>
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <div className="flex justify-end gap-2">
-            <button
+
+          {error && (
+            <p className="text-xs text-destructive font-medium">{error}</p>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="rounded px-4 py-2 text-sm text-gray-400 hover:text-gray-200"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={isLoading}
-              className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold hover:bg-indigo-500 disabled:opacity-50"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {isLoading ? "Creating..." : "Create Room"}
-            </button>
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" className="opacity-25" />
+                    <path d="M4 12a8 8 0 018-8" className="opacity-75" />
+                  </svg>
+                  Creating…
+                </span>
+              ) : (
+                "Create Room"
+              )}
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
