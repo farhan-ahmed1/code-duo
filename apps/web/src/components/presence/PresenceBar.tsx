@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useAwareness } from '@/hooks/useAwareness';
-import UserBadge from './UserBadge';
-import type { Awareness } from 'y-protocols/awareness';
+import { useAwareness } from "@/hooks/useAwareness";
+import UserBadge from "./UserBadge";
+import type { Awareness } from "y-protocols/awareness";
 
 interface PresenceBarProps {
   awareness: Awareness | null;
@@ -10,7 +10,12 @@ interface PresenceBarProps {
 
 export default function PresenceBar({ awareness }: PresenceBarProps) {
   const { localUser, remoteUsers } = useAwareness(awareness);
-  const allUsers = localUser ? [{ ...localUser, isLocal: true }, ...remoteUsers.map(u => ({ ...u, isLocal: false }))] : [];
+  const allUsers = localUser
+    ? [
+        { ...localUser, isLocal: true },
+        ...remoteUsers.map((u) => ({ ...u, isLocal: false })),
+      ]
+    : [];
 
   return (
     <aside className="flex w-48 flex-col gap-2 border-l border-gray-800 bg-gray-900 p-3">

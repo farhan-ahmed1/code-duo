@@ -1,8 +1,10 @@
-import * as Y from 'yjs';
-import { WebSocket } from 'ws';
-import { IncomingMessage } from 'node:http';
+// Ambient module declarations — imports must live inside the declare block
+// so this file is treated as a global declaration file, not a module.
+declare module "y-websocket/bin/utils" {
+  import * as Y from "yjs";
+  import { WebSocket } from "ws";
+  import { IncomingMessage } from "node:http";
 
-declare module 'y-websocket/bin/utils' {
   export function setupWSConnection(
     conn: WebSocket,
     req: IncomingMessage,

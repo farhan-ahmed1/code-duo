@@ -1,14 +1,13 @@
-import { MiddlewareHandler, ErrorHandler } from 'hono';
-import { cors } from 'hono/cors';
-import { logger as honoLogger } from 'hono/logger';
-import { logger } from '../utils/logger';
+import { MiddlewareHandler, ErrorHandler } from "hono";
+import { cors } from "hono/cors";
+import { logger } from "../utils/logger";
 
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'http://localhost:3000';
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? "http://localhost:3000";
 
 export const corsMiddleware = cors({
   origin: ALLOWED_ORIGIN,
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
+  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization"],
 });
 
 export const requestLogger: MiddlewareHandler = async (c, next) => {
@@ -24,6 +23,6 @@ export const requestLogger: MiddlewareHandler = async (c, next) => {
 };
 
 export const errorHandler: ErrorHandler = (err, c) => {
-  logger.error({ err }, 'Unhandled error');
-  return c.json({ error: 'Internal server error' }, 500);
+  logger.error({ err }, "Unhandled error");
+  return c.json({ error: "Internal server error" }, 500);
 };

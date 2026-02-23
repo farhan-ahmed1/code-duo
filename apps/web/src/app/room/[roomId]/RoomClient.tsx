@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useYjs } from '@/hooks/useYjs';
-import CollaborativeEditor from '@/components/editor/CollaborativeEditor';
-import EditorToolbar from '@/components/editor/EditorToolbar';
-import PresenceBar from '@/components/presence/PresenceBar';
+import { useYjs } from "@/hooks/useYjs";
+import CollaborativeEditor from "@/components/editor/CollaborativeEditor";
+import EditorToolbar from "@/components/editor/EditorToolbar";
+import PresenceBar from "@/components/presence/PresenceBar";
 
 interface RoomClientProps {
   roomId: string;
 }
 
 export default function RoomClient({ roomId }: RoomClientProps) {
-  const { ydoc, provider, ytext, isConnected } = useYjs(roomId);
+  const { provider, ytext } = useYjs(roomId);
   const awareness = provider?.awareness ?? null;
 
   return (
@@ -18,12 +18,7 @@ export default function RoomClient({ roomId }: RoomClientProps) {
       <EditorToolbar roomId={roomId} provider={provider} />
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 overflow-hidden">
-          <CollaborativeEditor
-            roomId={roomId}
-            ytext={ytext}
-            provider={provider}
-            awareness={awareness}
-          />
+          <CollaborativeEditor ytext={ytext} awareness={awareness} />
         </div>
         <PresenceBar awareness={awareness} />
       </div>

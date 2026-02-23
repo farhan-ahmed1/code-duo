@@ -1,18 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@code-duo/shared/src/constants';
-import type { EditorLanguage } from '@code-duo/shared/src/types';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  SUPPORTED_LANGUAGES,
+  DEFAULT_LANGUAGE,
+} from "@code-duo/shared/src/constants";
+import type { EditorLanguage } from "@code-duo/shared/src/types";
 
 interface CreateRoomDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export default function CreateRoomDialog({ open, onOpenChange }: CreateRoomDialogProps) {
+export default function CreateRoomDialog({
+  open,
+  onOpenChange,
+}: CreateRoomDialogProps) {
   const router = useRouter();
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const [language, setLanguage] = useState<EditorLanguage>(DEFAULT_LANGUAGE);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,19 +31,19 @@ export default function CreateRoomDialog({ open, onOpenChange }: CreateRoomDialo
     setError(null);
 
     try {
-      const res = await fetch('/api/rooms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim() || 'My Room', language }),
+      const res = await fetch("/api/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() || "My Room", language }),
       });
 
-      if (!res.ok) throw new Error('Failed to create room');
+      if (!res.ok) throw new Error("Failed to create room");
 
       const room = await res.json();
       router.push(`/room/${room.id}`);
       onOpenChange(false);
-    } catch (err) {
-      setError('Could not create room. Please try again.');
+    } catch (_err) {
+      setError("Could not create room. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -49,7 +55,9 @@ export default function CreateRoomDialog({ open, onOpenChange }: CreateRoomDialo
         <h2 className="mb-4 text-lg font-semibold">Create a Room</h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm text-gray-400">Room Name</label>
+            <label className="mb-1 block text-sm text-gray-400">
+              Room Name
+            </label>
             <input
               type="text"
               value={name}
@@ -66,7 +74,9 @@ export default function CreateRoomDialog({ open, onOpenChange }: CreateRoomDialo
               className="w-full rounded bg-gray-800 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-indigo-500"
             >
               {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>{lang}</option>
+                <option key={lang} value={lang}>
+                  {lang}
+                </option>
               ))}
             </select>
           </div>
@@ -84,7 +94,7 @@ export default function CreateRoomDialog({ open, onOpenChange }: CreateRoomDialo
               disabled={isLoading}
               className="rounded bg-indigo-600 px-4 py-2 text-sm font-semibold hover:bg-indigo-500 disabled:opacity-50"
             >
-              {isLoading ? 'Creating...' : 'Create Room'}
+              {isLoading ? "Creating..." : "Create Room"}
             </button>
           </div>
         </form>

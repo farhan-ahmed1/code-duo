@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import type { User } from '@code-duo/shared/src/types';
+import type { User } from "@code-duo/shared/src/types";
 
 interface UserBadgeProps {
   user: User;
@@ -15,9 +15,7 @@ export default function UserBadge({ user, isLocal = false }: UserBadgeProps) {
         style={{ backgroundColor: user.color }}
       />
       <span className="truncate text-gray-200">{user.name}</span>
-      {isLocal && (
-        <span className="ml-auto text-xs text-gray-500">you</span>
-      )}
+      {isLocal && <span className="ml-auto text-xs text-gray-500">you</span>}
     </div>
   );
 }

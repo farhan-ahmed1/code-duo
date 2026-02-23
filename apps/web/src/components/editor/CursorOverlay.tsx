@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // CursorOverlay renders floating name labels above remote cursors.
 // It complements the y-monaco MonacoBinding which handles cursor line decorations.
@@ -26,7 +26,7 @@ export default function CursorOverlay({ cursors }: CursorOverlayProps) {
             top: cursor.top,
             left: cursor.left,
             backgroundColor: cursor.color,
-            transform: 'translateY(-100%)',
+            transform: "translateY(-100%)",
           }}
         >
           {cursor.name}

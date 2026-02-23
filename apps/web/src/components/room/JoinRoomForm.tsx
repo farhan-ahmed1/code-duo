@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function JoinRoomForm() {
   const router = useRouter();
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -13,7 +13,7 @@ export default function JoinRoomForm() {
     // Handle both full URLs and bare room codes
     try {
       const url = new URL(raw);
-      const parts = url.pathname.split('/');
+      const parts = url.pathname.split("/");
       return parts[parts.length - 1] ?? raw;
     } catch {
       return raw.trim();
@@ -26,7 +26,7 @@ export default function JoinRoomForm() {
 
     const roomId = extractRoomId(input);
     if (!roomId) {
-      setError('Enter a room code or URL.');
+      setError("Enter a room code or URL.");
       return;
     }
 
@@ -34,12 +34,12 @@ export default function JoinRoomForm() {
     try {
       const res = await fetch(`/api/rooms/${roomId}`);
       if (!res.ok) {
-        setError('Room not found.');
+        setError("Room not found.");
         return;
       }
       router.push(`/room/${roomId}`);
     } catch {
-      setError('Could not join room. Please try again.');
+      setError("Could not join room. Please try again.");
     } finally {
       setIsLoading(false);
     }

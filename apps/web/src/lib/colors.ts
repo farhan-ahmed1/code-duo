@@ -1,4 +1,4 @@
-import { USER_COLORS } from '@code-duo/shared/src/constants';
+import { USER_COLORS } from "@code-duo/shared/src/constants";
 
 /**
  * Deterministically assign a color from the palette based on a numeric client ID.

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import CreateRoomDialog from '@/components/room/CreateRoomDialog';
-import JoinRoomForm from '@/components/room/JoinRoomForm';
+import { useState } from "react";
+import CreateRoomDialog from "@/components/room/CreateRoomDialog";
+import JoinRoomForm from "@/components/room/JoinRoomForm";
 
 export default function HomePage() {
   const [createOpen, setCreateOpen] = useState(false);

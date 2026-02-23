@@ -1,10 +1,10 @@
-import type { Metadata } from 'next';
-import './globals.css';
+import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'Code Duo — Real-Time Collaborative Code Editor',
+  title: "Code Duo — Real-Time Collaborative Code Editor",
   description:
-    'Collaborate on code in real time with zero merge conflicts, powered by CRDTs.',
+    "Collaborate on code in real time with zero merge conflicts, powered by CRDTs.",
 };
 
 export default function RootLayout({

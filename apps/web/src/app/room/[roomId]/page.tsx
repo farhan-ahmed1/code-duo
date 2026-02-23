@@ -1,4 +1,4 @@
-import RoomClient from './RoomClient';
+import RoomClient from "./RoomClient";
 
 interface RoomPageProps {
   params: Promise<{ roomId: string }>;

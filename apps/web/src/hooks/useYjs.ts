@@ -1,15 +1,27 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
-import { IndexeddbPersistence } from 'y-indexeddb';
-import { YJS_TEXT_KEY } from '@code-duo/shared/src/constants';
+import { useEffect, useState } from "react";
+import * as Y from "yjs";
+import { WebsocketProvider } from "y-websocket";
+import { IndexeddbPersistence } from "y-indexeddb";
+import { YJS_TEXT_KEY } from "@code-duo/shared/src/constants";
 
 // Server accepts WebSocket upgrades only on /yjs/* paths
-const WS_BASE = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://localhost:4000';
+const WS_BASE = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:4000";
 const WS_URL = `${WS_BASE}/yjs`;
 
+/**
+ * Initialises a Yjs collaborative document for the given room.
+ *
+ * Creates a Y.Doc, a WebSocket provider that syncs with the backend
+ * (`/yjs/<roomId>`), and an IndexedDB provider for offline persistence
+ * and instant load from local cache.
+ *
+ * @param roomId - The room ID to sync with. Changing this value tears
+ *   down the current doc/provider pair and creates a fresh one.
+ * @returns The live Y.Doc, WebSocket provider, shared Y.Text instance,
+ *   and a boolean indicating whether the WebSocket is currently connected.
+ */
 export function useYjs(roomId: string) {
   const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
@@ -26,8 +38,8 @@ export function useYjs(roomId: string) {
     // Remote WebSocket sync — connects to ws://host/yjs/<roomId>
     const wsProvider = new WebsocketProvider(WS_URL, roomId, doc);
 
-    wsProvider.on('status', ({ status }: { status: string }) => {
-      setIsConnected(status === 'connected');
+    wsProvider.on("status", ({ status }: { status: string }) => {
+      setIsConnected(status === "connected");
     });
 
     // Set state so consumers re-render and pick up live instances

@@ -1,25 +1,25 @@
 // Core domain types for Code Duo
 
 export type EditorLanguage =
-  | 'javascript'
-  | 'typescript'
-  | 'python'
-  | 'go'
-  | 'rust'
-  | 'c'
-  | 'cpp'
-  | 'java'
-  | 'csharp'
-  | 'ruby'
-  | 'php'
-  | 'html'
-  | 'css'
-  | 'json'
-  | 'markdown';
+  | "javascript"
+  | "typescript"
+  | "python"
+  | "go"
+  | "rust"
+  | "c"
+  | "cpp"
+  | "java"
+  | "csharp"
+  | "ruby"
+  | "php"
+  | "html"
+  | "css"
+  | "json"
+  | "markdown";
 
-export type ConnectionStatus = 'connected' | 'connecting' | 'disconnected';
+export type ConnectionStatus = "connected" | "connecting" | "disconnected";
 
-export type SyncStatus = 'synced' | 'syncing';
+export type SyncStatus = "synced" | "syncing";
 
 export interface Room {
   id: string;
@@ -53,7 +53,7 @@ export interface CreateRoomResponse extends Room {
 }
 
 export interface HealthResponse {
-  status: 'healthy' | 'unhealthy';
+  status: "healthy" | "unhealthy";
   uptime: number;
   activeRooms: number;
   activeConnections: number;

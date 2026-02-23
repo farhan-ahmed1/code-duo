@@ -1,31 +1,34 @@
-'use client';
+"use client";
 
-import { SUPPORTED_LANGUAGES } from '@code-duo/shared/src/constants';
-import { useConnectionStatus } from '@/hooks/useConnectionStatus';
-import ShareLinkButton from '@/components/room/ShareLinkButton';
-import type { WebsocketProvider } from 'y-websocket';
+import { SUPPORTED_LANGUAGES } from "@code-duo/shared/src/constants";
+import { useConnectionStatus } from "@/hooks/useConnectionStatus";
+import ShareLinkButton from "@/components/room/ShareLinkButton";
+import type { WebsocketProvider } from "y-websocket";
 
 interface EditorToolbarProps {
   roomId: string;
   provider: WebsocketProvider | null;
 }
 
-export default function EditorToolbar({ roomId, provider }: EditorToolbarProps) {
+export default function EditorToolbar({
+  roomId,
+  provider,
+}: EditorToolbarProps) {
   const { status } = useConnectionStatus(provider);
 
   const statusColor =
-    status === 'connected'
-      ? 'bg-green-500'
-      : status === 'connecting'
-        ? 'bg-yellow-500'
-        : 'bg-red-500';
+    status === "connected"
+      ? "bg-green-500"
+      : status === "connecting"
+        ? "bg-yellow-500"
+        : "bg-red-500";
 
   const statusLabel =
-    status === 'connected'
-      ? 'Connected'
-      : status === 'connecting'
-        ? 'Connecting...'
-        : 'Offline';
+    status === "connected"
+      ? "Connected"
+      : status === "connecting"
+        ? "Connecting..."
+        : "Offline";
 
   return (
     <header className="flex h-12 items-center gap-4 border-b border-gray-800 bg-gray-900 px-4">

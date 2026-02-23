@@ -1,11 +1,16 @@
-import { WebSocketServer, WebSocket } from 'ws';
-import { IncomingMessage } from 'node:http';
-import { setupWSConnection, setPersistence } from 'y-websocket/bin/utils';
-import { DocumentStore } from './persistence/document-store';
-import { logger } from './utils/logger';
-import { activeConnections, activeRooms, messagesTotal, documentSavesTotal } from './utils/metrics';
-import * as Y from 'yjs';
-import { DOCUMENT_DEBOUNCE_MS } from '@code-duo/shared/src/constants';
+import { WebSocketServer, WebSocket } from "ws";
+import { IncomingMessage } from "node:http";
+import { setupWSConnection, setPersistence } from "y-websocket/bin/utils";
+import { DocumentStore } from "./persistence/document-store";
+import { logger } from "./utils/logger";
+import {
+  activeConnections,
+  activeRooms,
+  messagesTotal,
+  documentSavesTotal,
+} from "./utils/metrics";
+import * as Y from "yjs";
+import { DOCUMENT_DEBOUNCE_MS } from "@code-duo/shared/src/constants";
 
 const documentStore = new DocumentStore();
 const roomConnectionCounts = new Map<string, number>();
@@ -13,8 +18,8 @@ const saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 function getRoomNameFromUrl(url: string): string {
   // URL format: /yjs/:roomId
-  const parts = url.split('/').filter(Boolean);
-  return parts[parts.length - 1] ?? 'default';
+  const parts = url.split("/").filter(Boolean);
+  return parts[parts.length - 1] ?? "default";
 }
 
 function scheduleSave(roomId: string, ydoc: Y.Doc) {
@@ -25,7 +30,7 @@ function scheduleSave(roomId: string, ydoc: Y.Doc) {
     const state = Y.encodeStateAsUpdate(ydoc);
     documentStore.saveDocument(roomId, state);
     documentSavesTotal.inc();
-    logger.info({ roomId }, 'Document persisted');
+    logger.info({ roomId }, "Document persisted");
     saveTimers.delete(roomId);
   }, DOCUMENT_DEBOUNCE_MS);
 
@@ -40,22 +45,22 @@ setPersistence({
     const saved = documentStore.loadDocument(roomId);
     if (saved) {
       Y.applyUpdate(ydoc, saved);
-      logger.info({ roomId }, 'Document state restored from storage');
+      logger.info({ roomId }, "Document state restored from storage");
     }
     // Schedule incremental saves on every update
-    ydoc.on('update', () => scheduleSave(roomId, ydoc));
+    ydoc.on("update", () => scheduleSave(roomId, ydoc));
   },
   writeState: async (roomId: string, ydoc: Y.Doc) => {
     const state = Y.encodeStateAsUpdate(ydoc);
     documentStore.saveDocument(roomId, state);
     documentSavesTotal.inc();
-    logger.info({ roomId }, 'Document state flushed on last disconnect');
+    logger.info({ roomId }, "Document state flushed on last disconnect");
   },
 });
 
 export function setupWebSocketServer(wss: WebSocketServer) {
-  wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-    const url = req.url ?? '/';
+  wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
+    const url = req.url ?? "/";
     const roomId = getRoomNameFromUrl(url);
 
     // Track connection counts
@@ -64,7 +69,7 @@ export function setupWebSocketServer(wss: WebSocketServer) {
     activeConnections.inc();
     if (count === 1) activeRooms.inc();
 
-    logger.info({ roomId, totalInRoom: count }, 'Client connected');
+    logger.info({ roomId, totalInRoom: count }, "Client connected");
 
     // y-websocket handles the Yjs sync protocol
     setupWSConnection(ws, req, {
@@ -72,23 +77,26 @@ export function setupWebSocketServer(wss: WebSocketServer) {
       gc: true,
     });
 
-    ws.on('message', () => {
+    ws.on("message", () => {
       messagesTotal.inc();
     });
 
-    ws.on('close', () => {
-      const remaining = Math.max(0, (roomConnectionCounts.get(roomId) ?? 1) - 1);
+    ws.on("close", () => {
+      const remaining = Math.max(
+        0,
+        (roomConnectionCounts.get(roomId) ?? 1) - 1,
+      );
       roomConnectionCounts.set(roomId, remaining);
       activeConnections.dec();
       if (remaining === 0) {
         activeRooms.dec();
         roomConnectionCounts.delete(roomId);
       }
-      logger.info({ roomId, remaining }, 'Client disconnected');
+      logger.info({ roomId, remaining }, "Client disconnected");
     });
 
-    ws.on('error', (err) => {
-      logger.error({ roomId, err }, 'WebSocket error');
+    ws.on("error", (err) => {
+      logger.error({ roomId, err }, "WebSocket error");
     });
   });
 }

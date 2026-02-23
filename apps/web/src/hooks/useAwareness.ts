@@ -1,15 +1,17 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Awareness } from 'y-protocols/awareness';
-import type { User, UserAwarenessState } from '@code-duo/shared/src/types';
-import { generateColor } from '@/lib/colors';
+import { useEffect, useState } from "react";
+import { Awareness } from "y-protocols/awareness";
+import type { User, UserAwarenessState } from "@code-duo/shared/src/types";
+import { generateColor } from "@/lib/colors";
 
-const STORAGE_KEY = 'code-duo:username';
+const STORAGE_KEY = "code-duo:username";
 
 function getOrCreateUser(clientId: number): User {
   const storedName = localStorage.getItem(STORAGE_KEY);
-  const name = storedName ?? `User-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  const name =
+    storedName ??
+    `User-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
   if (!storedName) localStorage.setItem(STORAGE_KEY, name);
 
   return {
@@ -19,6 +21,20 @@ function getOrCreateUser(clientId: number): User {
   };
 }
 
+/**
+ * Manages Yjs awareness state for the local user and tracks all remote
+ * users connected to the same room.
+ *
+ * On mount it reads (or generates) a display name from localStorage,
+ * assigns a deterministic color from the palette, and broadcasts the
+ * user state to all peers.
+ *
+ * @param awareness - The awareness instance from the WebSocket provider.
+ *   Pass `null` while the provider is not yet initialised; the hook is
+ *   a no-op until a non-null value is provided.
+ * @returns The local user object, an array of remote user objects
+ *   (updated in real time), and a setter to change the local display name.
+ */
 export function useAwareness(awareness: Awareness | null) {
   const [localUser, setLocalUser] = useState<User | null>(null);
   const [remoteUsers, setRemoteUsers] = useState<User[]>([]);
@@ -31,10 +47,13 @@ export function useAwareness(awareness: Awareness | null) {
     const user = getOrCreateUser(aw.clientID);
     setLocalUser(user);
 
-    aw.setLocalStateField('user', user);
+    aw.setLocalStateField("user", user);
 
     function handleChange() {
-      const states = Array.from(aw.getStates().entries()) as [number, UserAwarenessState][];
+      const states = Array.from(aw.getStates().entries()) as [
+        number,
+        UserAwarenessState,
+      ][];
       const remote = states
         .filter(([id]) => id !== aw.clientID)
         .map(([, state]) => state.user)
@@ -42,8 +61,8 @@ export function useAwareness(awareness: Awareness | null) {
       setRemoteUsers(remote);
     }
 
-    aw.on('change', handleChange);
-    return () => aw.off('change', handleChange);
+    aw.on("change", handleChange);
+    return () => aw.off("change", handleChange);
   }, [awareness]);
 
   function setUserName(name: string) {
@@ -51,7 +70,7 @@ export function useAwareness(awareness: Awareness | null) {
     localStorage.setItem(STORAGE_KEY, name);
     const updated = { ...localUser, name };
     setLocalUser(updated);
-    awareness.setLocalStateField('user', updated);
+    awareness.setLocalStateField("user", updated);
   }
 
   return { localUser, remoteUsers, setUserName };

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 interface ShareLinkButtonProps {
   roomId: string;
@@ -21,7 +21,7 @@ export default function ShareLinkButton({ roomId }: ShareLinkButtonProps) {
       onClick={handleCopy}
       className="rounded bg-gray-700 px-3 py-1.5 text-xs font-medium hover:bg-gray-600 transition-colors"
     >
-      {copied ? 'Copied!' : 'Share Link'}
+      {copied ? "Copied!" : "Share Link"}
     </button>
   );
 }
