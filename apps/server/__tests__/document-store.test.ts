@@ -6,8 +6,7 @@ describe('DocumentStore', () => {
   let store: DocumentStore;
 
   beforeEach(() => {
-    process.env.DATA_DIR = ':memory:';
-    store = new DocumentStore();
+    store = new DocumentStore(':memory:');
   });
 
   afterEach(() => {

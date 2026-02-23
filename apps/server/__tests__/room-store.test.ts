@@ -5,8 +5,7 @@ describe('RoomStore', () => {
   let store: RoomStore;
 
   beforeEach(() => {
-    process.env.DATA_DIR = ':memory:';
-    store = new RoomStore();
+    store = new RoomStore(':memory:');
   });
 
   afterEach(() => {

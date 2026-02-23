@@ -9,10 +9,15 @@ const DATA_DIR = process.env.DATA_DIR ?? './data';
 export class RoomStore {
   private db: Database.Database;
 
-  constructor() {
-    mkdirSync(DATA_DIR, { recursive: true });
-    this.db = new Database(join(DATA_DIR, 'codeduo.db'));
-    this.db.pragma('journal_mode = WAL');
+  constructor(dbPath?: string) {
+    if (dbPath === ':memory:') {
+      this.db = new Database(':memory:');
+    } else {
+      const dir = dbPath ? join(dbPath, '..') : DATA_DIR;
+      mkdirSync(dir, { recursive: true });
+      this.db = new Database(dbPath ?? join(DATA_DIR, 'codeduo.db'));
+      this.db.pragma('journal_mode = WAL');
+    }
     this.migrate();
   }
 
