@@ -10,8 +10,7 @@ interface RoomClientProps {
 }
 
 export default function RoomClient({ roomId }: RoomClientProps) {
-  const { provider, ytext } = useYjs(roomId);
-  const awareness = provider?.awareness ?? null;
+  const { provider, ytext, awareness } = useYjs(roomId);
 
   return (
     <div className="flex h-screen flex-col bg-gray-950">

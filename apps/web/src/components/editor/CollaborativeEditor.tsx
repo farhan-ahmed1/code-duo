@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import type { MonacoBinding } from "y-monaco";
 import type * as Y from "yjs";
 import type { Awareness } from "y-protocols/awareness";
+import CursorOverlay from "./CursorOverlay";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -13,23 +14,25 @@ interface CollaborativeEditorProps {
   awareness: Awareness | null;
 }
 
+/**
+ * Full-featured collaborative Monaco editor.
+ *
+ * Binds a shared `Y.Text` to the editor via `y-monaco` and renders
+ * floating name labels above remote cursors through `CursorOverlay`.
+ */
 export default function CollaborativeEditor({
   ytext,
   awareness,
 }: CollaborativeEditorProps) {
   const bindingRef = useRef<MonacoBinding | null>(null);
-  const editorRef = useRef<
-    | Parameters<NonNullable<React.ComponentProps<typeof Editor>["onMount"]>>[0]
-    | null
-  >(null);
-  // State flag so the effect re-runs when the editor becomes available,
-  // regardless of whether Yjs state arrived before or after Monaco mounted.
-  const [editorReady, setEditorReady] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [editorInstance, setEditorInstance] = useState<any>(null);
 
+  // Create the y-monaco binding once the editor, ytext, and awareness are all available.
   useEffect(() => {
-    if (!editorRef.current || !ytext || !awareness) return;
+    if (!editorInstance || !ytext || !awareness) return;
 
-    const editor = editorRef.current;
+    const editor = editorInstance;
     let binding: MonacoBinding | null = null;
     let cancelled = false;
 
@@ -45,24 +48,15 @@ export default function CollaborativeEditor({
       binding?.destroy();
       bindingRef.current = null;
     };
-  }, [ytext, awareness, editorReady]);
+  }, [ytext, awareness, editorInstance]);
 
-  function handleEditorMount(
-    editor: Parameters<
-      NonNullable<React.ComponentProps<typeof Editor>["onMount"]>
-    >[0],
-    _monaco: Parameters<
-      NonNullable<React.ComponentProps<typeof Editor>["onMount"]>
-    >[1], // intentionally unused
-  ) {
-    editorRef.current = editor;
-    // Signal the effect — if ytext is already available the binding is created
-    // immediately; if not, the effect will fire again once ytext is set.
-    setEditorReady(true);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function handleEditorMount(editor: any) {
+    setEditorInstance(editor);
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="relative h-full w-full">
       <Editor
         height="100%"
         defaultLanguage="typescript"
@@ -80,6 +74,11 @@ export default function CollaborativeEditor({
             Loading editor...
           </div>
         }
+      />
+      <CursorOverlay
+        awareness={awareness}
+        ytext={ytext}
+        editorInstance={editorInstance}
       />
     </div>
   );

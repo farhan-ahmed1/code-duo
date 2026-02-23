@@ -58,5 +58,5 @@ export function useYjs(roomId: string) {
     };
   }, [roomId]);
 
-  return { ydoc, provider, ytext, isConnected };
+  return { ydoc, provider, ytext, isConnected, awareness: provider?.awareness ?? null };
 }
