@@ -63,9 +63,9 @@ export default function EditorDemoSection() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {[
-                  { label: "room",         value: "abc-123-xyz",       color: "rgba(255,255,255,0.7)" },
+                  { label: "room",         value: "abc-123-xyz",       color: "var(--text-muted)" },
                   { label: "language",     value: "TypeScript",        color: "var(--text-muted)" },
-                  { label: "connected",    value: "2 / ∞",             color: "rgba(255,255,255,0.7)" },
+                  { label: "connected",    value: "2 / ∞",             color: "var(--text-muted)" },
                   { label: "sync latency", value: "< 50ms",            color: "var(--text-muted)" },
                 ].map(({ label, value, color }) => (
                   <div key={label} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>

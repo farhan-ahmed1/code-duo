@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import ThemeToggle from "./ThemeToggle";
 
 interface LandingNavProps {
   onCreateRoom: () => void;
@@ -9,10 +12,15 @@ interface LandingNavProps {
 }
 
 export default function LandingNav({ onCreateRoom, onJoinRoom }: LandingNavProps) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const logoSrc = mounted && resolvedTheme === "light" ? "/logo-light.svg" : "/logo.svg";
+
   return (
     <nav className="landing-nav">
       <Link href="/" className="nav-logo">
-        <Image src="/logo.svg" alt="CodeDuo logo" width={32} height={32} className="nav-logo-img" />
+        <Image src={logoSrc} alt="CodeDuo logo" width={32} height={32} className="nav-logo-img" />
         CodeDuo
       </Link>
       <ul className="nav-links">
@@ -26,6 +34,7 @@ export default function LandingNav({ onCreateRoom, onJoinRoom }: LandingNavProps
         </li>
       </ul>
       <div className="nav-right">
+        <ThemeToggle />
         <button onClick={onJoinRoom} className="btn-ghost">
           Join room <span className="kbd">J</span>
         </button>

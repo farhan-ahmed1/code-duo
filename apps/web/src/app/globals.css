@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Zed-inspired deep dark theme — always dark */
+    /* Zed-inspired deep dark theme — default */
     --background: 220 18% 7%;
     --foreground: 220 10% 92%;
     --card: 220 16% 10%;
@@ -30,6 +30,33 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
     --radius: 0.5rem;
+  }
+
+  .light {
+    --background: 216 30% 96%;
+    --foreground: 220 20% 12%;
+    --card: 216 25% 93%;
+    --card-foreground: 220 20% 12%;
+    --popover: 216 25% 93%;
+    --popover-foreground: 220 20% 12%;
+    --primary: 215 90% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 20% 89%;
+    --secondary-foreground: 220 20% 20%;
+    --muted: 216 20% 89%;
+    --muted-foreground: 220 10% 44%;
+    --accent: 216 20% 86%;
+    --accent-foreground: 220 20% 12%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 216 18% 84%;
+    --input: 216 20% 89%;
+    --ring: 215 90% 52%;
+    --chart-1: 215 90% 52%;
+    --chart-2: 160 55% 38%;
+    --chart-3: 30 80% 50%;
+    --chart-4: 280 65% 55%;
+    --chart-5: 340 75% 50%;
   }
 }
 
@@ -467,6 +494,8 @@ html {
   align-items: center;
   justify-content: center;
   margin-top: 2px;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.8);
 }
 
 .pill-title {
@@ -797,6 +826,8 @@ html {
   justify-content: center;
   margin-bottom: 20px;
   font-size: 16px;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.8);
 }
 
 .feature-title {
@@ -823,6 +854,17 @@ html {
   font-size: 10px;
   border-radius: 100px;
   letter-spacing: 0.03em;
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.feature-tag-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.6);
+  flex-shrink: 0;
 }
 
 /* ── How it works ── */
@@ -933,7 +975,7 @@ html {
   font-family: var(--font-lp-mono);
   font-size: 11px;
   line-height: 1.7;
-  color: rgba(255,255,255,0.35);
+  color: var(--text-muted);
 }
 
 /* ── CTA ── */
@@ -1058,4 +1100,102 @@ html {
   .steps-content-row { grid-template-columns: 1fr; gap: 32px; }
   .landing-nav .nav-links { display: none; }
   .cta-box { padding: 50px 30px; }
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/*  Light Mode                                             */
+/* ═══════════════════════════════════════════════════════ */
+
+html.light ::-webkit-scrollbar-track { background: hsl(216 25% 93%); }
+html.light ::-webkit-scrollbar-thumb { background: hsl(216 18% 80%); }
+html.light ::-webkit-scrollbar-thumb:hover { background: hsl(216 18% 70%); }
+
+html.light .landing-page {
+  --bg: #f4f7fd;
+  --bg2: #eaeff9;
+  --bg3: #dfe6f5;
+  --lp-border: rgba(0,0,0,0.07);
+  --border-hover: rgba(0,0,0,0.14);
+  --text: #1a1d27;
+  --text-muted: rgba(26,29,39,0.55);
+  --text-dim: rgba(26,29,39,0.3);
+  --blue: #4d8eff;
+  --blue-dim: rgba(77,142,255,0.1);
+  --green: #14a37a;
+  --green-dim: rgba(20,163,122,0.1);
+  --purple: #7c3aed;
+  --purple-dim: rgba(124,58,237,0.1);
+  --amber: #d97706;
+}
+
+/* Nav */
+html.light .landing-nav {
+  background: rgba(244,247,253,0.92);
+}
+
+/* Buttons */
+html.light .btn-ghost:hover {
+  background: rgba(0,0,0,0.05);
+  border-color: var(--lp-border);
+}
+
+html.light .btn-secondary-lg {
+  background: rgba(0,0,0,0.03);
+  color: var(--text-muted);
+}
+html.light .btn-secondary-lg:hover {
+  background: rgba(0,0,0,0.06);
+  color: var(--text);
+}
+
+/* KBD badges */
+html.light .landing-page .kbd {
+  color: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.05);
+  border-color: rgba(0,0,0,0.1);
+}
+
+/* Pill hover */
+html.light .pill:hover { background: rgba(0,0,0,0.02); }
+
+/* Steps */
+html.light .step-badge-base {
+  background: rgba(0,0,0,0.03);
+  border-color: rgba(0,0,0,0.08);
+}
+html.light .step-code {
+  color: var(--text-muted);
+  background: var(--bg2);
+}
+
+/* Logo border — softer shadow on light */
+html.light .nav-logo-img {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+/* Theme toggle sizing */
+.theme-toggle {
+  padding: 6px 8px;
+}
+
+/* Light mode pill icons */
+html.light .pill-icon {
+  background: rgba(0,0,0,0.05);
+  color: rgba(0,0,0,0.6);
+}
+
+/* Light mode feature cards */
+html.light .feature-icon-wrap {
+  background: rgba(0,0,0,0.05);
+  color: rgba(0,0,0,0.6);
+}
+
+html.light .feature-tag {
+  background: rgba(0,0,0,0.04);
+  color: rgba(0,0,0,0.5);
+  border-color: rgba(0,0,0,0.1);
+}
+
+html.light .feature-tag-dot {
+  background: rgba(0,0,0,0.35);
 }
