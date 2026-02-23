@@ -11,7 +11,7 @@ export default function LandingNav({ onCreateRoom }: LandingNavProps) {
   return (
     <nav className="landing-nav">
       <Link href="/" className="nav-logo">
-        <Image src="/logo.svg" alt="CodeDuo logo" width={28} height={28} className="nav-logo-img" />
+        <Image src="/logo.svg" alt="CodeDuo logo" width={32} height={32} className="nav-logo-img" />
         CodeDuo
       </Link>
       <ul className="nav-links">

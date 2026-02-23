@@ -5,7 +5,7 @@ export default function LandingFooter() {
     <footer className="landing-footer">
       <div className="footer-left">
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Image src="/logo.svg" alt="CodeDuo logo" width={20} height={20} className="nav-logo-img" />
+          <Image src="/logo.svg" alt="CodeDuo logo" width={24} height={24} className="nav-logo-img" />
           <span>CodeDuo</span>
         </div>
         <span>© 2026</span>
