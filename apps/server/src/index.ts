@@ -56,7 +56,7 @@ httpServer.on("upgrade", (req, socket, head) => {
 
 httpServer.on("request", getRequestListener(app.fetch));
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, "0.0.0.0", () => {
   logger.info({ port: PORT, event: "server_start" }, "Code Duo server started");
   initMetrics();
   startRoomCleanupJob();
