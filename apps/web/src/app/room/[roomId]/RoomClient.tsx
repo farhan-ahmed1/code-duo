@@ -9,6 +9,7 @@ import CollaborativeEditor from "@/components/editor/CollaborativeEditor";
 import EditorToolbar from "@/components/editor/EditorToolbar";
 import PresenceBar from "@/components/presence/PresenceBar";
 import type { EditorLanguage } from "@code-duo/shared/src/types";
+import { Users } from "lucide-react";
 
 interface RoomClientProps {
   roomId: string;
@@ -24,6 +25,7 @@ export default function RoomClient({ roomId }: RoomClientProps) {
   const storeSetLanguage = useEditorStore((s) => s.setLanguage);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Keep the Zustand store in sync with the Y.Map language so any
   // component reading from the store sees the shared value.
@@ -34,8 +36,10 @@ export default function RoomClient({ roomId }: RoomClientProps) {
   // Auto-collapse on narrow viewports; re-expand when the screen grows
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
+    setIsMobile(mq.matches);
     setSidebarOpen(!mq.matches);
     function handleChange(e: MediaQueryListEvent) {
+      setIsMobile(e.matches);
       setSidebarOpen(!e.matches);
     }
     mq.addEventListener("change", handleChange);
@@ -52,7 +56,7 @@ export default function RoomClient({ roomId }: RoomClientProps) {
   const connectedUsers = remoteUsers.length + 1;
 
   return (
-    <div className="flex h-screen flex-col bg-gray-950">
+    <div className="flex h-screen flex-col bg-background">
       <EditorToolbar
         roomId={roomId}
         provider={provider}
@@ -63,7 +67,7 @@ export default function RoomClient({ roomId }: RoomClientProps) {
         connectedUsers={connectedUsers}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-hidden">
         {/* Editor takes remaining width (~85% when sidebar open) */}
         <div className="min-w-0 flex-1 overflow-hidden">
           <CollaborativeEditor
@@ -75,12 +79,38 @@ export default function RoomClient({ roomId }: RoomClientProps) {
           />
         </div>
 
-        {/* Presence sidebar (~15% / 14rem when expanded, 2.5rem when collapsed) */}
-        <PresenceBar
-          awareness={awareness}
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen((prev) => !prev)}
-        />
+        {/* Mobile: overlay sidebar; Desktop: inline sidebar */}
+        {isMobile && sidebarOpen && (
+          <div
+            className="absolute inset-0 z-10 bg-black/40"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        <div
+          className={
+            isMobile
+              ? `absolute right-0 top-0 z-20 h-full transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "translate-x-full"}`
+              : ""
+          }
+        >
+          <PresenceBar
+            awareness={awareness}
+            isOpen={isMobile ? true : sidebarOpen}
+            onToggle={() => setSidebarOpen((prev) => !prev)}
+          />
+        </div>
+
+        {/* Floating mobile toggle when sidebar is hidden */}
+        {isMobile && !sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="absolute bottom-4 right-4 z-10 flex items-center gap-1.5 rounded-full bg-gray-800 px-3 py-2 text-xs font-medium text-gray-300 shadow-lg ring-1 ring-gray-700 transition-all hover:bg-gray-700 hover:text-white active:scale-95"
+            aria-label="Show presence bar"
+          >
+            <Users className="h-3.5 w-3.5" />
+            <span>{connectedUsers}</span>
+          </button>
+        )}
       </div>
     </div>
   );

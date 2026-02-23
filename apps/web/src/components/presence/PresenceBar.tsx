@@ -37,10 +37,10 @@ export default function PresenceBar({
   // ── Collapsed state ────────────────────────────────────────────────
   if (!isOpen) {
     return (
-      <aside className="flex w-10 flex-col items-center border-l border-gray-800 bg-gray-900 py-3">
+      <aside className="flex w-10 flex-col items-center border-l border-border bg-card py-3">
         <button
           onClick={onToggle}
-          className="flex flex-col items-center gap-2 text-gray-400 transition-colors hover:text-gray-200"
+          className="flex flex-col items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           aria-label="Expand presence sidebar"
         >
           <PanelRightOpen className="h-4 w-4" />
@@ -55,18 +55,18 @@ export default function PresenceBar({
 
   // ── Expanded state ─────────────────────────────────────────────────
   return (
-    <aside className="flex w-56 flex-col border-l border-gray-800 bg-gray-900 animate-in slide-in-from-right-4 duration-200">
+    <aside className="flex w-56 flex-col border-l border-border bg-card transition-all duration-300 animate-in slide-in-from-right-4">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-800/60 px-3 py-2.5">
+      <div className="flex items-center justify-between border-b border-border/60 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <Users className="h-3.5 w-3.5 text-gray-500" />
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+          <Users className="h-3.5 w-3.5 text-muted-foreground" />
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Online&ensp;·&ensp;{totalCount}
           </p>
         </div>
         <button
           onClick={onToggle}
-          className="rounded p-0.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-gray-300"
+          className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           aria-label="Collapse presence sidebar"
         >
           <PanelRightClose className="h-4 w-4" />
@@ -76,7 +76,7 @@ export default function PresenceBar({
       {/* Name prompt for first-time users */}
       {isNewUser && (
         <div className="mx-3 mt-3 rounded-md bg-primary/10 p-2.5 animate-in fade-in-0 duration-300">
-          <p className="mb-2 text-xs text-gray-400">
+          <p className="mb-2 text-xs text-muted-foreground">
             What should we call you?
           </p>
           <form onSubmit={handleNamePromptSubmit} className="flex gap-1.5">
@@ -85,7 +85,7 @@ export default function PresenceBar({
               onChange={(e) => setNameInput(e.target.value)}
               placeholder={localUser?.name ?? "Your name"}
               maxLength={20}
-              className="min-w-0 flex-1 rounded-md border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none placeholder:text-gray-500 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+              className="min-w-0 flex-1 rounded-md border border-border bg-secondary px-2 py-1 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
               autoFocus
             />
             <button
@@ -103,7 +103,7 @@ export default function PresenceBar({
       )}
 
       {/* User list */}
-      <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2">
+      <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2" role="list" aria-label="Connected users">
         {localUser && (
           <UserBadge
             key={localUser.id}
@@ -122,7 +122,7 @@ export default function PresenceBar({
         ))}
 
         {totalCount === 1 && (
-          <p className="mt-4 px-2 text-center text-xs text-gray-600">
+          <p className="mt-4 px-2 text-center text-xs text-muted-foreground/60">
             Share the room link to invite others
           </p>
         )}

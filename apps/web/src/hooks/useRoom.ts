@@ -34,8 +34,9 @@ export function useRoom(roomId: string, ydoc: Y.Doc | null) {
   // Fetch room metadata on mount and seed Y.Map if empty
   useEffect(() => {
     seededRef.current = false;
+    const controller = new AbortController();
 
-    fetch(`${API_URL}/api/rooms/${roomId}`)
+    fetch(`${API_URL}/api/rooms/${roomId}`, { signal: controller.signal })
       .then((res) => res.json())
       .then((data: Room) => {
         setRoom(data);
@@ -51,7 +52,13 @@ export function useRoom(roomId: string, ydoc: Y.Doc | null) {
           seededRef.current = true;
         }
       })
-      .catch(console.error);
+      .catch((_err) => {
+        // Room metadata fetch failed or was aborted — language will fall
+        // back to default. The Y.Map will still sync the live value from
+        // other peers.
+      });
+
+    return () => controller.abort();
   }, [roomId, ydoc]);
 
   // Observe Y.Map for real-time language changes

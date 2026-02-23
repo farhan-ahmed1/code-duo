@@ -6,7 +6,8 @@ import { useConnectionStatus } from "@/hooks/useConnectionStatus";
 import ShareLinkButton from "@/components/room/ShareLinkButton";
 import { Badge } from "@/components/ui/badge";
 import type { WebsocketProvider } from "y-websocket";
-import { Moon, Sun, Users } from "lucide-react";
+import { Moon, Sun, Users, Home } from "lucide-react";
+import Link from "next/link";
 
 /** Human-readable labels for languages in the dropdown. */
 const LANGUAGE_LABELS: Record<EditorLanguage, string> = {
@@ -68,7 +69,7 @@ export default function EditorToolbar({
 
   const statusColor = (() => {
     if (status === "disconnected") return "bg-red-500";
-    if (isSyncing) return "bg-yellow-500";
+    if (isSyncing) return "bg-yellow-500 animate-pulse";
     return "bg-green-500";
   })();
 
@@ -80,16 +81,25 @@ export default function EditorToolbar({
   })();
 
   return (
-    <header className="flex h-12 items-center gap-4 border-b border-gray-800 bg-gray-900 px-4">
-      {/* Brand */}
-      <span className="text-sm font-semibold text-gray-200">Code Duo</span>
+    <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border bg-card px-4">
+      {/* Brand / Home */}
+      <Link
+        href="/"
+        className="flex items-center gap-1.5 text-sm font-semibold text-foreground transition-colors hover:text-primary"
+        aria-label="Back to home"
+      >
+        <Home className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">Code Duo</span>
+      </Link>
+
+      <div className="h-4 w-px bg-border" />
 
       {/* Language dropdown */}
       <select
         aria-label="Editor language"
         value={language}
         onChange={(e) => onLanguageChange(e.target.value as EditorLanguage)}
-        className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 outline-none focus:ring-1 focus:ring-blue-500"
+        className="rounded border border-border bg-secondary px-2 py-1 text-xs text-secondary-foreground outline-none transition-colors focus:ring-1 focus:ring-ring"
       >
         {SUPPORTED_LANGUAGES.map((lang) => (
           <option key={lang} value={lang}>
@@ -104,7 +114,7 @@ export default function EditorToolbar({
         <button
           aria-label={`Switch to ${theme === "vs-dark" ? "light" : "dark"} theme`}
           onClick={onThemeToggle}
-          className="rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-200"
+          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           {theme === "vs-dark" ? (
             <Sun className="h-4 w-4" />
@@ -116,14 +126,14 @@ export default function EditorToolbar({
         {/* Connected user count */}
         <Badge
           variant="secondary"
-          className="flex items-center gap-1 bg-gray-800 text-gray-300"
+          className="flex items-center gap-1 bg-secondary text-secondary-foreground"
         >
           <Users className="h-3 w-3" />
           <span>{connectedUsers}</span>
         </Badge>
 
         {/* Connection status */}
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span className={`h-2 w-2 rounded-full ${statusColor}`} />
           <span className="hidden sm:inline">{statusLabel}</span>
         </div>

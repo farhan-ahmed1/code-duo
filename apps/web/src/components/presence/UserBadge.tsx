@@ -81,9 +81,10 @@ export default function UserBadge({
 
   const badge = (
     <div
+      data-testid="presence-user"
       className={cn(
-        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-        "animate-in fade-in-0 slide-in-from-right-2 duration-200",
+        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-all duration-200",
+        "animate-in fade-in-0 slide-in-from-right-2 duration-300",
         isLocal
           ? "bg-gray-800/60 ring-1 ring-gray-700/40"
           : "hover:bg-gray-800/40",

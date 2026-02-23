@@ -105,8 +105,31 @@ export default function CollaborativeEditor({
         }}
         onMount={handleEditorMount}
         loading={
-          <div className="flex h-full items-center justify-center text-gray-500">
-            Loading editor…
+          <div className="flex h-full flex-col bg-[hsl(220,18%,7%)]">
+            {/* Skeleton toolbar */}
+            <div className="flex h-10 items-center gap-3 border-b border-gray-800 px-4">
+              <div className="h-3 w-20 animate-pulse rounded bg-gray-800" />
+              <div className="h-3 w-16 animate-pulse rounded bg-gray-800" />
+            </div>
+            {/* Skeleton line numbers + code lines */}
+            <div className="flex flex-1 gap-4 p-4">
+              <div className="flex flex-col gap-2">
+                {Array.from({ length: 18 }).map((_, i) => (
+                  <div key={i} className="h-3 w-6 animate-pulse rounded bg-gray-800/60" />
+                ))}
+              </div>
+              <div className="flex flex-1 flex-col gap-2">
+                {[85, 70, 55, 90, 40, 75, 60, 50, 80, 65, 45, 70, 55, 85, 30, 75, 60, 50].map(
+                  (w, i) => (
+                    <div
+                      key={i}
+                      className="h-3 animate-pulse rounded bg-gray-800/40"
+                      style={{ width: `${w}%` }}
+                    />
+                  ),
+                )}
+              </div>
+            </div>
           </div>
         }
       />
