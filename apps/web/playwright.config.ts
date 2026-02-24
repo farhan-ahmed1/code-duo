@@ -49,14 +49,17 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testIgnore: /performance-benchmark\.spec\.ts/,
     },
     {
       name: "firefox",
       use: { ...devices["Desktop Firefox"] },
+      testIgnore: /performance-benchmark\.spec\.ts/,
     },
     {
       name: "webkit",
       use: { ...devices["Desktop Safari"] },
+      testIgnore: /performance-benchmark\.spec\.ts/,
     },
 
     // ── Stress / performance tests – Chromium only (resource-intensive) ───

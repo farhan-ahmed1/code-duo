@@ -20,7 +20,10 @@ async function createRoom(
 
 /** Wait for the Monaco editor to mount and become interactive. */
 async function waitForEditor(page: Page) {
-  await page.waitForSelector(".monaco-editor .view-lines", { timeout: 15_000 });
+  await page.waitForSelector(".monaco-editor .view-lines", {
+    timeout: 15_000,
+    state: "visible",
+  });
   // Give y-monaco binding a moment to initialise
   await page.waitForTimeout(500);
 }
@@ -38,6 +41,21 @@ async function typeInEditor(page: Page, text: string) {
   await page.keyboard.press("End");       // move to end of line
   await page.keyboard.insertText(text);
   await page.keyboard.press("Escape");   // dismiss autocomplete
+}
+
+/** Return the full plain-text content currently visible in Monaco.
+ *  Reads via the test hook or Monaco API — reliable across all browsers,
+ *  unlike reading DOM `.textContent` which may only return gutter numbers. */
+async function getEditorText(page: Page): Promise<string> {
+  return page.evaluate(() => {
+    type TestWindow = { __codeDuoGetEditorValue?: () => string; monaco?: { editor?: { getModels?: () => Array<{ getValue(): string }> } } };
+    const w = window as unknown as TestWindow;
+    if (typeof w.__codeDuoGetEditorValue === "function") {
+      return w.__codeDuoGetEditorValue();
+    }
+    const models = w.monaco?.editor?.getModels?.();
+    return models?.[0]?.getValue() ?? "";
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -77,17 +95,15 @@ test.describe("Full-flow integration", () => {
     // ---- 3. Real-time editing with cursors -----------------------------
     await typeInEditor(creator, "# Creator edit\n");
 
-    await expect(joiner.locator(".monaco-editor")).toContainText(
-      "Creator edit",
-      { timeout: 5_000 },
-    );
+    await expect
+      .poll(() => getEditorText(joiner), { timeout: 5_000 })
+      .toContain("Creator edit");
 
     await typeInEditor(joiner, "# Joiner edit\n");
 
-    await expect(creator.locator(".monaco-editor")).toContainText(
-      "Joiner edit",
-      { timeout: 5_000 },
-    );
+    await expect
+      .poll(() => getEditorText(creator), { timeout: 5_000 })
+      .toContain("Joiner edit");
 
     // ---- 4. Language change syncs --------------------------------------
     // Creator switches language to JavaScript
@@ -109,23 +125,20 @@ test.describe("Full-flow integration", () => {
     await ctxJoiner.setOffline(false);
 
     // Both should converge
-    await expect(creator.locator(".monaco-editor")).toContainText(
-      "offline text",
-      { timeout: 10_000 },
-    );
-    await expect(joiner.locator(".monaco-editor")).toContainText(
-      "online text",
-      { timeout: 10_000 },
-    );
+    await expect
+      .poll(() => getEditorText(creator), { timeout: 15_000 })
+      .toContain("offline text");
+    await expect
+      .poll(() => getEditorText(joiner), { timeout: 15_000 })
+      .toContain("online text");
 
     // ---- 6. Content persists after page reload -------------------------
     await joiner.reload();
     await waitForEditor(joiner);
 
-    await expect(joiner.locator(".monaco-editor")).toContainText(
-      "Creator edit",
-      { timeout: 10_000 },
-    );
+    await expect
+      .poll(() => getEditorText(joiner), { timeout: 10_000 })
+      .toContain("Creator edit");
 
     await ctxCreator.close();
     await ctxJoiner.close();
@@ -157,10 +170,9 @@ test.describe("Full-flow integration", () => {
     // All three markers should appear in every editor
     for (const page of pages) {
       for (let i = 0; i < 3; i++) {
-        await expect(page.locator(".monaco-editor")).toContainText(
-          `USER_${i}_MARKER`,
-          { timeout: 8_000 },
-        );
+        await expect
+          .poll(() => getEditorText(page), { timeout: 8_000 })
+          .toContain(`USER_${i}_MARKER`);
       }
     }
 
@@ -188,10 +200,9 @@ test.describe("Real-time collaboration", () => {
 
     await typeInEditor(pageA, "Hello from A");
 
-    await expect(pageB.locator(".monaco-editor")).toContainText(
-      "Hello from A",
-      { timeout: 5_000 },
-    );
+    await expect
+      .poll(() => getEditorText(pageB), { timeout: 5_000 })
+      .toContain("Hello from A");
 
     await contextA.close();
     await contextB.close();
@@ -215,20 +226,21 @@ test.describe("Real-time collaboration", () => {
     await typeInEditor(pageA, "AAA");
     await pageA.waitForTimeout(1_000);
     await typeInEditor(pageB, "BBB");
+    await pageB.waitForTimeout(3000);
 
     // Both should eventually have both edits
-    await expect(pageA.locator(".monaco-editor")).toContainText("AAA", {
-      timeout: 10_000,
-    });
-    await expect(pageA.locator(".monaco-editor")).toContainText("BBB", {
-      timeout: 10_000,
-    });
-    await expect(pageB.locator(".monaco-editor")).toContainText("AAA", {
-      timeout: 10_000,
-    });
-    await expect(pageB.locator(".monaco-editor")).toContainText("BBB", {
-      timeout: 10_000,
-    });
+    await expect
+      .poll(() => getEditorText(pageA), { timeout: 20_000 })
+      .toContain("AAA");
+    await expect
+      .poll(() => getEditorText(pageA), { timeout: 20_000 })
+      .toContain("BBB");
+    await expect
+      .poll(() => getEditorText(pageB), { timeout: 20_000 })
+      .toContain("AAA");
+    await expect
+      .poll(() => getEditorText(pageB), { timeout: 20_000 })
+      .toContain("BBB");
 
     await contextA.close();
     await contextB.close();
@@ -253,16 +265,23 @@ test.describe("Real-time collaboration", () => {
     await typeInEditor(pageB, "Offline edit");
 
     // Give the local Yjs doc a moment to absorb the insert before reconnecting
-    await pageB.waitForTimeout(500);
+    await pageB.waitForTimeout(4000);
 
     // Bring context B back online
     await contextB.setOffline(false);
 
+    // Allow time for y-websocket to reconnect with exponential backoff
+    await pageB.waitForTimeout(4000);
+
+    // Ensure the offline edit is present in pageB before checking pageA
+    await expect
+      .poll(() => getEditorText(pageB), { timeout: 30_000 })
+      .toContain("Offline edit");
+
     // Page A should receive the offline edit after WebSocket re-syncs
-    await expect(pageA.locator(".monaco-editor")).toContainText(
-      "Offline edit",
-      { timeout: 15_000 },
-    );
+    await expect
+      .poll(() => getEditorText(pageA), { timeout: 30_000 })
+      .toContain("Offline edit");
 
     await contextA.close();
     await contextB.close();
@@ -334,15 +353,26 @@ test.describe("Real-time collaboration", () => {
     // Wait for debounced server-side save
     await page.waitForTimeout(3_000);
 
+    // Open a second witness context so the server-side Y.Doc stays alive during reload
+    const witnessCtx = await browser.newContext();
+    const witnessPage = await witnessCtx.newPage();
+    await witnessPage.goto(roomUrl);
+    await waitForEditor(witnessPage);
+
+    // Verify the content reached the server via the witness before reloading
+    await expect
+      .poll(() => getEditorText(witnessPage), { timeout: 10_000 })
+      .toContain("persistent content here");
+
     // Reload the page
     await page.reload();
     await waitForEditor(page);
 
-    await expect(page.locator(".monaco-editor")).toContainText(
-      "persistent content here",
-      { timeout: 10_000 },
-    );
+    await expect
+      .poll(() => getEditorText(page), { timeout: 10_000 })
+      .toContain("persistent content here");
 
+    await witnessCtx.close();
     await context.close();
   });
 

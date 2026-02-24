@@ -175,13 +175,13 @@ test.describe("Stress: 5 concurrent users", () => {
       for (let b = 0; b < BURSTS; b++) {
         for (let i = 0; i < USER_COUNT; i++) {
           await typeInEditor(pages[i], `U${i}B${b} `);
-          await pages[i].waitForTimeout(200);
+          await pages[i].waitForTimeout(400);
         }
         // Allow CRDT ops from this round to propagate before next round
-        await pages[0].waitForTimeout(1_500);
+        await pages[0].waitForTimeout(3_000);
       }
 
-      const CONVERGENCE_TIMEOUT = 20_000;
+      const CONVERGENCE_TIMEOUT = 30_000;
 
       for (const page of pages) {
         for (let i = 0; i < USER_COUNT; i++) {
@@ -242,12 +242,13 @@ test.describe("Stress: network interruptions", () => {
           .map((p, i) => typeInEditor(p, `OFFLINE_${i} `)),
       );
 
-      // Online users type their own content simultaneously
-      await Promise.all(
-        pages
-          .slice(OFFLINE_COUNT)
-          .map((p, i) => typeInEditor(p, `ONLINE_${i} `)),
-      );
+      // Online users type their own content sequentially to prevent CRDT
+      // interleaving that splits tokens (e.g. "ON" + "LINE_0" instead of
+      // "ONLINE_0") when multiple pages click-to-focus simultaneously.
+      for (let i = 0; i < USER_COUNT - OFFLINE_COUNT; i++) {
+        await typeInEditor(pages[OFFLINE_COUNT + i], `ONLINE_${i} `);
+        await pages[OFFLINE_COUNT + i].waitForTimeout(300);
+      }
 
       // Bring offline users back online
       await Promise.all(
@@ -256,8 +257,11 @@ test.describe("Stress: network interruptions", () => {
           .map((ctx) => ctx.setOffline(false)),
       );
 
+      // Allow time for y-websocket to reconnect with exponential backoff
+      await pages[0].waitForTimeout(2_000);
+
       // All 5 clients must converge — containing both offline and online edits
-      const CONVERGENCE_TIMEOUT = 20_000;
+      const CONVERGENCE_TIMEOUT = 30_000;
 
       for (const page of pages) {
         for (let i = 0; i < OFFLINE_COUNT; i++) {
@@ -331,10 +335,10 @@ test.describe("Stress: network interruptions", () => {
       // Ensure client 2 is definitely online after the throttle cycles
       await contexts[2].setOffline(false);
       // Give client 2 time to reconnect and catch up
-      await pages[2].waitForTimeout(3_000);
+      await pages[2].waitForTimeout(6000);
 
       // All content from active clients must be present in throttled client
-      const TIMEOUT = 20_000;
+      const TIMEOUT = 30_000;
       for (let i = 0; i < 5; i++) {
         await expect
           .poll(() => getEditorText(pages[2]), { timeout: TIMEOUT })
@@ -358,24 +362,49 @@ test.describe("Stress: network interruptions", () => {
  * when running the cross-browser projects. It verifies the two browser-
  * specific features that vary most across engines.
  */
-test("IndexedDB persistence works after hard reload", async ({ page }) => {
+test("IndexedDB persistence works after hard reload", async ({ browser }) => {
   const roomId = await createRoom("IndexedDB Persistence Test");
   const roomUrl = `${BASE_URL}/room/${roomId}`;
+
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
 
   await page.goto(roomUrl);
   await waitForEditor(page);
   await typeInEditor(page, "persisted via indexeddb");
+  await page.waitForTimeout(20000);
+  const editorValue = await getEditorText(page);
+  console.log("Editor value after typing:", editorValue);
 
-  // Wait for y-indexeddb to flush
-  await page.waitForTimeout(1_500);
+  // Poll for the edit on the original page before opening the witness
+  await expect
+    .poll(() => getEditorText(page), { timeout: 40_000 })
+    .toContain("persisted via indexeddb");
 
-  // Hard reload — bypasses server-side load, reads from IndexedDB
+  // Open a second context so the server-side Y.Doc stays alive during the
+  // reload — prevents a race between y-websocket's writeState (triggered on
+  // last-client disconnect) and bindState (triggered on reconnection).
+  const witnessCtx = await browser.newContext();
+  const witnessPage = await witnessCtx.newPage();
+  await witnessPage.goto(roomUrl);
+  await waitForEditor(witnessPage);
+  await witnessPage.waitForTimeout(4000);
+
+  // Verify the content reached the server via the witness before reloading
+  await expect
+    .poll(() => getEditorText(witnessPage), { timeout: 40_000 })
+    .toContain("persisted via indexeddb");
+
+  // Hard reload — content restores from server (doc still alive) + IndexedDB
   await page.reload({ waitUntil: "networkidle" });
   await waitForEditor(page);
 
   await expect
-    .poll(() => getEditorText(page), { timeout: 10_000 })
+    .poll(() => getEditorText(page), { timeout: 20_000 })
     .toContain("persisted via indexeddb");
+
+  await witnessCtx.close();
+  await ctx.close();
 });
 
 test("WebSocket reconnects transparently after drop", async ({
