@@ -46,7 +46,6 @@ COPY --from=builder /app/apps/server/dist ./apps/server/dist
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
-VOLUME ["/app/data"]
 
 WORKDIR /app/apps/server
 
