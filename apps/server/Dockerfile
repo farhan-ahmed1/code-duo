@@ -3,14 +3,15 @@ FROM node:20-alpine AS builder
 
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
-WORKDIR /app
+# Install build tools required by better-sqlite3 (node-gyp)
+RUN apk add --no-cache python3 make g++
 
-# Copy workspace manifests first for layer caching
+WORKDIR /app first for layer caching
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/server/package.json ./apps/server/
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile && pnpm rebuild better-sqlite3
 
 # Copy source
 COPY packages/shared/ ./packages/shared/
@@ -24,8 +25,8 @@ FROM node:20-alpine AS runner
 
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Install build tools required by better-sqlite3 (node-gyp)
+RUN apk add --no-cache python3 make g++ curl
 
 WORKDIR /app
 
@@ -33,7 +34,7 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/server/package.json ./apps/server/
 
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile --prod && pnpm rebuild better-sqlite3
 
 COPY --from=builder /app/apps/server/dist ./apps/server/dist
 COPY --from=builder /app/packages/shared/src ./packages/shared/src
