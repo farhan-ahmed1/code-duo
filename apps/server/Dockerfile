@@ -34,12 +34,12 @@ WORKDIR /app
 
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/shared/package.json ./packages/shared/
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY apps/server/package.json ./apps/server/
 
 RUN pnpm install --frozen-lockfile --prod && pnpm rebuild better-sqlite3
 
 COPY --from=builder /app/apps/server/dist ./apps/server/dist
-COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
