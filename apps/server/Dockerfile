@@ -12,6 +12,7 @@ WORKDIR /app
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/server/package.json ./apps/server/
+COPY apps/web/package.json ./apps/web/
 
 RUN pnpm install --frozen-lockfile && pnpm rebuild better-sqlite3
 
@@ -35,6 +36,7 @@ WORKDIR /app
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/server/package.json ./apps/server/
+COPY apps/web/package.json ./apps/web/
 
 RUN pnpm install --frozen-lockfile --prod && pnpm rebuild better-sqlite3
 
@@ -49,12 +51,9 @@ VOLUME ["/app/data"]
 WORKDIR /app/apps/server
 
 ENV NODE_ENV=production
-ENV PORT=4000
 ENV DATA_DIR=/app/data
 
-EXPOSE 4000
-
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD curl -f http://localhost:4000/api/health || exit 1
+  CMD curl -f http://localhost:${PORT:-4000}/api/health || exit 1
 
 CMD ["node", "dist/index.js"]

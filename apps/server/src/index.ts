@@ -22,6 +22,7 @@ app.use("/api/*", bodySizeLimit);
 app.use("/api/*", apiRateLimit);
 
 // ── Routes ─────────────────────────────────────────────────────────
+app.get("/", (c) => c.json({ service: "code-duo", status: "ok" }));
 app.route("/api", apiRouter);
 
 /**
