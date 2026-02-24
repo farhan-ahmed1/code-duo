@@ -97,6 +97,15 @@ export default function CollaborativeEditor({
   function handleEditorMount(editor: any, monaco: any) {
     setEditorInstance(editor);
     setMonacoInstance(monaco);
+    // E2E test hook — lets Playwright read the model value without depending
+    // on window.monaco being set by the AMD loader (which is not guaranteed
+    // in all build/runtime configurations, e.g. Turbopack dev mode).
+    if (typeof window !== "undefined") {
+      (window as unknown as Record<string, unknown>).__codeDuoGetEditorValue =
+        () => editor.getModel()?.getValue() ?? "";
+      (window as unknown as Record<string, unknown>).__codeDuoSetEditorValue =
+        (text: string) => editor.getModel()?.setValue(text);
+    }
     // Auto-focus the editor when entering a room
     editor.focus();
     onEditorReady?.(editor);

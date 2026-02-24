@@ -83,6 +83,61 @@ A background cleanup job prevents unbounded database growth:
 - **Yjs documents:** SQLite BLOB column; loaded on room open, flushed on last disconnect
 - **Client-side:** `y-indexeddb` for offline support and instant reload
 
+## Performance Benchmarks
+
+Benchmarks are captured by `apps/web/e2e/performance-benchmark.spec.ts` and can
+be reproduced by running:
+
+```bash
+pnpm test:e2e:benchmark
+```
+
+Results are written to `apps/web/e2e/benchmark-results.json` after each run.
+
+### Edit Propagation Latency (localhost, same region)
+
+Time from a keystroke on Client A until the change is visible on Client B.
+Measured with varying numbers of idle users in the same room (server fan-out
+load) across 7 samples per concurrency level.
+
+| Concurrent Users | min (ms) | p50 (ms) | p95 (ms) | max (ms) |
+|------------------|----------|----------|----------|----------|
+| 1                | 98       | 134      | 297      | 297      |
+| 3                | 161      | 231      | 342      | 342      |
+| 5                | 271      | 337      | 448      | 448      |
+| 10               | 669      | 726      | 1153     | 1153     |
+
+_Re-run `pnpm test:e2e:benchmark` to refresh. Results are also written to `apps/web/e2e/benchmark-results.json`._
+
+**Target:** p95 < 50 ms (same region, production); p95 < 5 000 ms (localhost ceiling enforced by test).
+
+### Document Load Time
+
+Time from `page.goto(roomUrl)` until Monaco is interactive, with documents of
+various sizes pre-seeded in SQLite (4 samples per size, fresh browser context
+each time — no warm cache).
+
+| Document Size | min (ms) | p50 (ms) | p95 (ms) | max (ms) |
+|---------------|----------|----------|----------|----------|
+| 1 KB          | 1191     | 1209     | 1611     | 1611     |
+| 100 KB        | 1040     | 1134     | 1149     | 1149     |
+| 1 MB          | 1055     | 1085     | 1205     | 1205     |
+
+_Re-run `pnpm test:e2e:benchmark` to refresh. Results are also written to `apps/web/e2e/benchmark-results.json`._
+
+**Target:** 1 MB document loads in under 15 seconds (ceiling enforced by test).
+
+### Methodology
+
+- All measurements taken on **localhost** (same machine as the server).
+- Edit propagation latency is measured as wall-clock time: `typeMarker` call
+  fires, then we poll the receiver page until the marker string appears.
+- Document load time starts at `page.goto` and ends when
+  `.monaco-editor .view-lines` is visible in the DOM.
+- Percentiles: p50 = median, p95 = 95th percentile of the sample array.
+
+---
+
 ## Tech Stack
 
 | Layer      | Technology                    |

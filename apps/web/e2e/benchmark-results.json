@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-02-24T03:37:44.826Z",
+  "editPropagationLatency": [
+    {
+      "concurrentUsers": 1,
+      "samples": [
+        297,
+        134,
+        113,
+        199,
+        110,
+        98,
+        198
+      ],
+      "min": 98,
+      "p50": 134,
+      "p95": 297,
+      "max": 297
+    },
+    {
+      "concurrentUsers": 3,
+      "samples": [
+        342,
+        231,
+        266,
+        204,
+        215,
+        231,
+        161
+      ],
+      "min": 161,
+      "p50": 231,
+      "p95": 342,
+      "max": 342
+    },
+    {
+      "concurrentUsers": 5,
+      "samples": [
+        448,
+        385,
+        274,
+        337,
+        296,
+        365,
+        271
+      ],
+      "min": 271,
+      "p50": 337,
+      "p95": 448,
+      "max": 448
+    },
+    {
+      "concurrentUsers": 10,
+      "samples": [
+        1153,
+        791,
+        690,
+        739,
+        726,
+        685,
+        669
+      ],
+      "min": 669,
+      "p50": 726,
+      "p95": 1153,
+      "max": 1153
+    }
+  ],
+  "documentLoadTime": [
+    {
+      "documentSizeLabel": "1 KB",
+      "documentSizeBytes": 1000,
+      "samples": [1191, 1209, 1350, 1611],
+      "min": 1191,
+      "p50": 1209,
+      "p95": 1611,
+      "max": 1611
+    },
+    {
+      "documentSizeLabel": "100 KB",
+      "documentSizeBytes": 100000,
+      "samples": [1040, 1134, 1145, 1149],
+      "min": 1040,
+      "p50": 1134,
+      "p95": 1149,
+      "max": 1149
+    },
+    {
+      "documentSizeLabel": "1 MB",
+      "documentSizeBytes": 1000000,
+      "samples": [1055, 1085, 1120, 1205],
+      "min": 1055,
+      "p50": 1085,
+      "p95": 1205,
+      "max": 1205
+    }
+  ]
+}

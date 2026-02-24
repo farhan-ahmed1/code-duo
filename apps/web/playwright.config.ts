@@ -1,0 +1,93 @@
+import { defineConfig, devices } from "@playwright/test";
+
+/**
+ * Playwright configuration for Code Duo.
+ *
+ * Runs the full E2E suite across Chrome (Chromium), Firefox, and Safari
+ * (WebKit) to cover cross-browser requirements.
+ *
+ * Environment variables:
+ *   PLAYWRIGHT_BASE_URL  – frontend URL (default: http://localhost:3000)
+ *   API_URL              – backend URL  (default: http://localhost:4000)
+ *   CI                   – set by GitHub Actions; enables retries and sharding
+ */
+
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
+
+export default defineConfig({
+  testDir: "./e2e",
+  /* Run each test up to 60 s before timing out */
+  timeout: 60_000,
+  /* Global test expectation timeout */
+  expect: { timeout: 10_000 },
+
+  /* Retry flaky tests once on CI, never locally */
+  retries: process.env.CI ? 1 : 0,
+
+  /* Sequential inside a single file but parallel across files */
+  fullyParallel: true,
+  workers: process.env.CI ? 2 : undefined,
+
+  /* Reporter: list in dev, HTML + dot on CI */
+  reporter: process.env.CI
+    ? [["dot"], ["html", { open: "never" }]]
+    : [["list"], ["html", { open: "on-failure" }]],
+
+  /* Shared settings for all projects */
+  use: {
+    baseURL: BASE_URL,
+    /* Capture trace on first retry for debugging */
+    trace: "on-first-retry",
+    /* Record video for failed tests */
+    video: "retain-on-failure",
+    /* Screenshot on failure */
+    screenshot: "only-on-failure",
+  },
+
+  projects: [
+    // ── Desktop browsers ───────────────────────────────────────────────────
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
+    },
+    {
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
+    },
+
+    // ── Stress / performance tests – Chromium only (resource-intensive) ───
+    {
+      name: "stress",
+      testMatch: /stress-test\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "benchmark",
+      testMatch: /performance-benchmark\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
+
+  /* Start frontend + backend dev servers automatically when not already up.
+   * Set reuseExistingServer: true so running `pnpm dev` manually first is
+   * also supported — Playwright will attach to the already-running process. */
+  webServer: [
+    {
+      command: "pnpm --filter @code-duo/server dev",
+      url: "http://localhost:4000/api/health",
+      reuseExistingServer: true,
+      timeout: 60_000,
+      env: { DISABLE_RATE_LIMIT: "true" },
+    },
+    {
+      command: "pnpm --filter @code-duo/web dev",
+      url: "http://localhost:3000",
+      reuseExistingServer: true,
+      timeout: 60_000,
+    },
+  ],
+});

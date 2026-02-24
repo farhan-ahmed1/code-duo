@@ -108,8 +108,14 @@ function getClientIp(c: Parameters<MiddlewareHandler>[0]): string {
 /**
  * Rate-limit room creation: 10 rooms per IP per hour.
  * Apply to `POST /api/rooms`.
+ *
+ * Set DISABLE_RATE_LIMIT=true to bypass (useful for local testing/benchmarks).
  */
 export const roomCreationRateLimit: MiddlewareHandler = async (c, next) => {
+  if (process.env.DISABLE_RATE_LIMIT === "true") {
+    return next();
+  }
+
   const ip = getClientIp(c);
   const { allowed, retryAfterMs } = roomCreationLimiter.check(ip);
 
@@ -132,8 +138,14 @@ export const roomCreationRateLimit: MiddlewareHandler = async (c, next) => {
 /**
  * Rate-limit general API traffic: 100 requests per IP per minute.
  * Apply globally to `/api/*`.
+ *
+ * Set DISABLE_RATE_LIMIT=true to bypass (useful for local testing/benchmarks).
  */
 export const apiRateLimit: MiddlewareHandler = async (c, next) => {
+  if (process.env.DISABLE_RATE_LIMIT === "true") {
+    return next();
+  }
+
   const ip = getClientIp(c);
   const { allowed, retryAfterMs } = apiRequestLimiter.check(ip);
 
