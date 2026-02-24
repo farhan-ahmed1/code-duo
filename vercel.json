@@ -1,0 +1,6 @@
+{
+  "installCommand": "pnpm install --filter=@code-duo/web...",
+  "buildCommand": "pnpm turbo run build --filter=@code-duo/web...",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs"
+}
