@@ -3,10 +3,12 @@ import { cors } from "hono/cors";
 import { logger } from "../utils/logger";
 import { httpRequestDuration } from "../utils/metrics";
 
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? "http://localhost:3000";
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGIN ?? "http://localhost:3000")
+  .split(",")
+  .map((o) => o.trim());
 
 export const corsMiddleware = cors({
-  origin: ALLOWED_ORIGIN,
+  origin: (origin) => (ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]),
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization"],
 });
