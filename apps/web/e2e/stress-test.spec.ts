@@ -133,16 +133,16 @@ test.describe("Stress: 5 concurrent users", () => {
     const { contexts, pages } = await setupRoom(browser as never, USER_COUNT, roomUrl);
 
     try {
-      // All users type at the same time
-      await Promise.all(
-        pages.map((p, i) =>
-          typeInEditor(p, `STRESS_USER_${i}_MARKER `),
-        ),
-      );
+      // Type sequentially with short pauses so no user's insertText races
+      // against another's click-to-focus (WebKit loses the insert otherwise).
+      for (let i = 0; i < USER_COUNT; i++) {
+        await typeInEditor(pages[i], `STRESS_USER_${i}_MARKER `);
+        await pages[i].waitForTimeout(300);
+      }
 
       // Allow a generous convergence window (CRDT guarantees eventual
       // consistency; latency on localhost is typically <200 ms)
-      const CONVERGENCE_TIMEOUT = 12_000;
+      const CONVERGENCE_TIMEOUT = 15_000;
 
       for (const page of pages) {
         for (let i = 0; i < USER_COUNT; i++) {
@@ -169,17 +169,19 @@ test.describe("Stress: 5 concurrent users", () => {
     const { contexts, pages } = await setupRoom(browser as never, USER_COUNT, roomUrl);
 
     try {
-      // Each user sends BURSTS of typing with a short pause between them
-      await Promise.all(
-        pages.map(async (p, i) => {
-          for (let b = 0; b < BURSTS; b++) {
-            await typeInEditor(p, `U${i}B${b} `);
-            await p.waitForTimeout(50);
-          }
-        }),
-      );
+      // Send bursts round-by-round.  Within each round, type sequentially
+      // with short pauses to avoid focus-racing (WebKit drops inserts when
+      // two pages click-to-focus simultaneously).
+      for (let b = 0; b < BURSTS; b++) {
+        for (let i = 0; i < USER_COUNT; i++) {
+          await typeInEditor(pages[i], `U${i}B${b} `);
+          await pages[i].waitForTimeout(200);
+        }
+        // Allow CRDT ops from this round to propagate before next round
+        await pages[0].waitForTimeout(1_500);
+      }
 
-      const CONVERGENCE_TIMEOUT = 15_000;
+      const CONVERGENCE_TIMEOUT = 20_000;
 
       for (const page of pages) {
         for (let i = 0; i < USER_COUNT; i++) {

@@ -77,7 +77,7 @@ export default defineConfig({
    * also supported — Playwright will attach to the already-running process. */
   webServer: [
     {
-      command: "pnpm --filter @code-duo/server dev",
+      command: "DISABLE_RATE_LIMIT=true pnpm --filter @code-duo/server dev",
       url: "http://localhost:4000/api/health",
       reuseExistingServer: true,
       timeout: 60_000,

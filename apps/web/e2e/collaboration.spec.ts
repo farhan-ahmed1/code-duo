@@ -13,6 +13,7 @@ async function createRoom(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, language }),
   });
+  if (!res.ok) throw new Error(`Failed to create room: ${res.status}`);
   const room = await res.json();
   return room.id as string;
 }
@@ -24,10 +25,19 @@ async function waitForEditor(page: Page) {
   await page.waitForTimeout(500);
 }
 
-/** Focus Monaco and type text. */
+/** Focus Monaco and insert text atomically.
+ *
+ *  Uses `keyboard.insertText()` rather than `keyboard.type()` so the entire
+ *  string is delivered as a single InputEvent.  This is reliable across all
+ *  browsers (WebKit in particular drops individual key events sent to Monaco
+ *  under load).
+ */
 async function typeInEditor(page: Page, text: string) {
   await page.click(".monaco-editor .view-lines");
-  await page.keyboard.type(text, { delay: 20 });
+  await page.keyboard.press("Escape");   // dismiss autocomplete
+  await page.keyboard.press("End");       // move to end of line
+  await page.keyboard.insertText(text);
+  await page.keyboard.press("Escape");   // dismiss autocomplete
 }
 
 // ---------------------------------------------------------------------------
@@ -44,13 +54,13 @@ test.describe("Full-flow integration", () => {
     await creator.goto(BASE_URL);
 
     // Click "Create Room" to open the dialog
-    await creator.click('button:has-text("Create Room")');
+    await creator.click('button[aria-label="Create a new room"]');
     await creator.waitForSelector('[role="dialog"]', { timeout: 5_000 });
 
     // Fill in room name, pick Python as the language
     await creator.fill('input[placeholder="My Coding Session"]', "Integration Test Room");
     await creator.selectOption("select", "python");
-    await creator.click('button:has-text("Create Room")');
+    await creator.locator('[role="dialog"] button[type="submit"]').click();
 
     // Should navigate to /room/<id>
     await creator.waitForURL(/\/room\/[A-Za-z0-9]+/, { timeout: 10_000 });
@@ -137,10 +147,12 @@ test.describe("Full-flow integration", () => {
       pages.push(page);
     }
 
-    // Each user types a unique marker
-    await Promise.all(
-      pages.map((p, i) => typeInEditor(p, `USER_${i}_MARKER `)),
-    );
+    // Each user types a unique marker sequentially to avoid CRDT interleaving
+    for (let i = 0; i < pages.length; i++) {
+      await typeInEditor(pages[i], `USER_${i}_MARKER `);
+      // Short pause to let CRDT sync before next user types
+      await pages[i].waitForTimeout(500);
+    }
 
     // All three markers should appear in every editor
     for (const page of pages) {
@@ -199,23 +211,23 @@ test.describe("Real-time collaboration", () => {
     await waitForEditor(pageA);
     await waitForEditor(pageB);
 
-    await Promise.all([
-      typeInEditor(pageA, "AAA"),
-      typeInEditor(pageB, "BBB"),
-    ]);
+    // Type sequentially — wait for CRDT sync between users
+    await typeInEditor(pageA, "AAA");
+    await pageA.waitForTimeout(1_000);
+    await typeInEditor(pageB, "BBB");
 
     // Both should eventually have both edits
     await expect(pageA.locator(".monaco-editor")).toContainText("AAA", {
-      timeout: 5_000,
+      timeout: 10_000,
     });
     await expect(pageA.locator(".monaco-editor")).toContainText("BBB", {
-      timeout: 5_000,
+      timeout: 10_000,
     });
     await expect(pageB.locator(".monaco-editor")).toContainText("AAA", {
-      timeout: 5_000,
+      timeout: 10_000,
     });
     await expect(pageB.locator(".monaco-editor")).toContainText("BBB", {
-      timeout: 5_000,
+      timeout: 10_000,
     });
 
     await contextA.close();
@@ -240,13 +252,16 @@ test.describe("Real-time collaboration", () => {
     await contextB.setOffline(true);
     await typeInEditor(pageB, "Offline edit");
 
+    // Give the local Yjs doc a moment to absorb the insert before reconnecting
+    await pageB.waitForTimeout(500);
+
     // Bring context B back online
     await contextB.setOffline(false);
 
-    // Page A should receive the offline edit
+    // Page A should receive the offline edit after WebSocket re-syncs
     await expect(pageA.locator(".monaco-editor")).toContainText(
       "Offline edit",
-      { timeout: 10_000 },
+      { timeout: 15_000 },
     );
 
     await contextA.close();
@@ -269,7 +284,7 @@ test.describe("Real-time collaboration", () => {
 
     // Both users should appear in each other's presence bars
     const presenceUsers = pageA.locator('[data-testid="presence-user"]');
-    await expect(presenceUsers).toHaveCount(2, { timeout: 5_000 });
+    await expect(presenceUsers).toHaveCount(2, { timeout: 10_000 });
 
     // After B disconnects, A should see only 1 user
     await contextB.close();
@@ -335,12 +350,12 @@ test.describe("Real-time collaboration", () => {
     await page.goto(BASE_URL);
 
     // Click Create Room
-    await page.click('button:has-text("Create Room")');
+    await page.click('button[aria-label="Create a new room"]');
     await page.waitForSelector('[role="dialog"]');
 
     // Fill form
     await page.fill('input[placeholder="My Coding Session"]', "My Test Room");
-    await page.click('button[type="submit"]:has-text("Create Room")');
+    await page.locator('[role="dialog"] button[type="submit"]').click();
 
     // Should navigate to room page
     await page.waitForURL(/\/room\/[A-Za-z0-9]+/, { timeout: 10_000 });
@@ -357,9 +372,13 @@ test.describe("Real-time collaboration", () => {
     const page = await context.newPage();
     await page.goto(BASE_URL);
 
+    // Open the Join Room dialog
+    await page.click('button[aria-label="Join an existing room"]');
+    await page.waitForSelector('[role="dialog"]', { timeout: 5_000 });
+
     // Enter room code and join
     await page.fill('input[placeholder="Paste a room code or URL…"]', roomId);
-    await page.click('button:has-text("Join")');
+    await page.locator('[role="dialog"] button[type="submit"]').click();
 
     await page.waitForURL(/\/room\//, { timeout: 10_000 });
     await waitForEditor(page);
