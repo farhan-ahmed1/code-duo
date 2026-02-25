@@ -8,9 +8,18 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./src/constants": "./dist/constants.js",
-    "./src/types": "./dist/types.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./src/constants": {
+      "types": "./dist/constants.d.ts",
+      "default": "./dist/constants.js"
+    },
+    "./src/types": {
+      "types": "./dist/types.d.ts",
+      "default": "./dist/types.js"
+    }
   },
   "scripts": {
     "build": "tsc",
