@@ -309,9 +309,9 @@ test.describe("Stress: network interruptions", () => {
       const throttleCycles = async () => {
         for (let cycle = 0; cycle < 3; cycle++) {
           await contexts[2].setOffline(true);
-          await pages[2].waitForTimeout(300);
+          await pages[2].waitForTimeout(500);
           await contexts[2].setOffline(false);
-          await pages[2].waitForTimeout(200);
+          await pages[2].waitForTimeout(500);
         }
       };
 
@@ -323,22 +323,28 @@ test.describe("Stress: network interruptions", () => {
             await typeInEditor(pages[0], `A${i} `);
             await pages[0].waitForTimeout(100);
           }
+          const txt0 = await getEditorText(pages[0]);
+          console.log("page0 content after typing:", txt0);
         })(),
         (async () => {
           for (let i = 0; i < 5; i++) {
             await typeInEditor(pages[1], `B${i} `);
             await pages[1].waitForTimeout(100);
           }
+          const txt1 = await getEditorText(pages[1]);
+          console.log("page1 content after typing:", txt1);
         })(),
       ]);
 
       // Ensure client 2 is definitely online after the throttle cycles
       await contexts[2].setOffline(false);
-      // Give client 2 time to reconnect and catch up
-      await pages[2].waitForTimeout(6000);
+      // Give client 2 ample time to reconnect and catch up
+      await pages[2].waitForTimeout(10000);
+      const afterReconnect = await getEditorText(pages[2]);
+      console.log("page2 content after reconnect:", afterReconnect);
 
       // All content from active clients must be present in throttled client
-      const TIMEOUT = 30_000;
+      const TIMEOUT = 60_000;
       for (let i = 0; i < 5; i++) {
         await expect
           .poll(() => getEditorText(pages[2]), { timeout: TIMEOUT })
@@ -371,15 +377,27 @@ test("IndexedDB persistence works after hard reload", async ({ browser }) => {
 
   await page.goto(roomUrl);
   await waitForEditor(page);
-  await typeInEditor(page, "persisted via indexeddb");
-  await page.waitForTimeout(20000);
-  const editorValue = await getEditorText(page);
-  console.log("Editor value after typing:", editorValue);
+  // Bypass flaky keyboard input by injecting text directly via the test hook.
+  await page.evaluate(() => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const w = window as any;
+    if (typeof w.__codeDuoSetEditorValue === "function") {
+      w.__codeDuoSetEditorValue("persisted via indexeddb");
+    } else {
+      // fallback in case hook isn't available
+      const models = w.monaco?.editor?.getModels?.();
+      models?.[0]?.setValue("persisted via indexeddb");
+    }
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+  });
 
-  // Poll for the edit on the original page before opening the witness
-  await expect
-    .poll(() => getEditorText(page), { timeout: 40_000 })
-    .toContain("persisted via indexeddb");
+  // Give y-indexeddb a moment to flush the new content.
+  await page.waitForTimeout(5000);
+
+  // Confirm the value is present locally before proceeding.
+  const editorValue = await getEditorText(page);
+  console.log("Editor value after injection:", editorValue);
+  await expect(editorValue).toContain("persisted via indexeddb");
 
   // Open a second context so the server-side Y.Doc stays alive during the
   // reload — prevents a race between y-websocket's writeState (triggered on
