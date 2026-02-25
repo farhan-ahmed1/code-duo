@@ -1,4 +1,4 @@
-import { USER_COLORS } from "@code-duo/shared/src/constants";
+import { USER_COLORS } from "@code-duo/shared";
 
 /**
  * Simple djb2-style hash so a string ID maps to a stable number.

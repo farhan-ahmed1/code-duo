@@ -1,6 +1,6 @@
 import { roomStore } from "../api/routes";
 import { documentStore } from "../ws-server";
-import { ROOM_EXPIRY_DAYS } from "@code-duo/shared/src/constants";
+import { ROOM_EXPIRY_DAYS } from "@code-duo/shared";
 import { logger } from "../utils/logger";
 
 const CLEANUP_INTERVAL_MS = 60 * 60 * 1000; // 1 hour

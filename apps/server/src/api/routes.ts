@@ -3,7 +3,7 @@ import { RoomStore } from "../persistence/room-store";
 import {
   DEFAULT_LANGUAGE,
   DEFAULT_PAGINATION_LIMIT,
-} from "@code-duo/shared/src/constants";
+} from "@code-duo/shared";
 import { roomCreationRateLimit } from "./rate-limiter";
 import {
   validateRoomName,

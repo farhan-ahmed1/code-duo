@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { IndexeddbPersistence } from "y-indexeddb";
-import { YJS_TEXT_KEY, WS_RECONNECT_CONFIG } from "@code-duo/shared/src/constants";
+import { YJS_TEXT_KEY, WS_RECONNECT_CONFIG } from "@code-duo/shared";
 
 // Server accepts WebSocket upgrades only on /yjs/* paths
 const WS_BASE = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:4000";

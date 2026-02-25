@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Awareness } from "y-protocols/awareness";
-import type { User, UserAwarenessState } from "@code-duo/shared/src/types";
+import type { User, UserAwarenessState } from "@code-duo/shared";
 import { generateColor } from "@/lib/colors";
 
 const STORAGE_KEY = "code-duo:username";

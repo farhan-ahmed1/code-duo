@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { PerformanceMetrics } from "@/hooks/usePerformanceMetrics";
-import type { ConnectionStatus, SyncStatus } from "@code-duo/shared/src/types";
+import type { ConnectionStatus, SyncStatus } from "@code-duo/shared";
 
 interface DebugPanelProps {
   metrics: PerformanceMetrics;

@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import type { MonacoBinding } from "y-monaco";
 import type * as Y from "yjs";
 import type { Awareness } from "y-protocols/awareness";
-import type { EditorLanguage } from "@code-duo/shared/src/types";
+import type { EditorLanguage } from "@code-duo/shared";
 import CursorOverlay from "./CursorOverlay";
 import { useConnectionStatus } from "@/hooks/useConnectionStatus";
 import type { WebsocketProvider } from "y-websocket";

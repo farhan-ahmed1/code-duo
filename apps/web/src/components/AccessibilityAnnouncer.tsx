@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ConnectionStatus } from "@code-duo/shared/src/types";
+import type { ConnectionStatus } from "@code-duo/shared";
 import type { PresenceUser } from "@/hooks/useAwareness";
 
 interface AccessibilityAnnouncerProps {

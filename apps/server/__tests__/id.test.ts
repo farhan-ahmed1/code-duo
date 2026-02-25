@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateRoomId } from "../src/utils/id.js";
-import { ROOM_ID_LENGTH } from "@code-duo/shared/src/constants";
+import { ROOM_ID_LENGTH } from "@code-duo/shared";
 
 describe("generateRoomId", () => {
   it("generates an ID of the correct length", () => {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { YJS_SETTINGS_KEY } from "@code-duo/shared/src/constants";
-import type { EditorLanguage, Room } from "@code-duo/shared/src/types";
+import { YJS_SETTINGS_KEY } from "@code-duo/shared";
+import type { EditorLanguage, Room } from "@code-duo/shared";
 import * as Y from "yjs";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";

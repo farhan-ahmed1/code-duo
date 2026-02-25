@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { generateRoomId } from "../utils/id";
-import type { Room, EditorLanguage } from "@code-duo/shared/src/types";
+import type { Room, EditorLanguage } from "@code-duo/shared";
 
 const DATA_DIR = process.env.DATA_DIR ?? "./data";
 

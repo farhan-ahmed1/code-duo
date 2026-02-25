@@ -11,14 +11,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./src/constants": {
-      "types": "./src/constants.ts",
-      "default": "./src/constants.ts"
-    },
-    "./src/types": {
-      "types": "./src/types.ts",
-      "default": "./src/types.ts"
     }
   },
   "scripts": {

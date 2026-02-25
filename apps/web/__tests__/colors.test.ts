@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateColor } from "../src/lib/colors";
-import { USER_COLORS } from "@code-duo/shared/src/constants";
+import { USER_COLORS } from "@code-duo/shared";
 
 describe("generateColor", () => {
   it("returns a string from the USER_COLORS palette", () => {

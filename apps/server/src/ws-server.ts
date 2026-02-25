@@ -11,7 +11,7 @@ import {
   documentSavesTotal,
 } from "./utils/metrics";
 import * as Y from "yjs";
-import { DOCUMENT_DEBOUNCE_MS } from "@code-duo/shared/src/constants";
+import { DOCUMENT_DEBOUNCE_MS } from "@code-duo/shared";
 
 const documentStore = new DocumentStore();
 const roomStore = new RoomStore();

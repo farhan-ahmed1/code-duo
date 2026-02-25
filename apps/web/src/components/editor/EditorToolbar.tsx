@@ -1,7 +1,7 @@
 "use client";
 
-import { SUPPORTED_LANGUAGES } from "@code-duo/shared/src/constants";
-import type { EditorLanguage } from "@code-duo/shared/src/types";
+import { SUPPORTED_LANGUAGES } from "@code-duo/shared";
+import type { EditorLanguage } from "@code-duo/shared";
 import { useConnectionStatus } from "@/hooks/useConnectionStatus";
 import ShareLinkButton from "@/components/room/ShareLinkButton";
 import { Badge } from "@/components/ui/badge";

@@ -13,8 +13,8 @@ import EditorToolbar from "@/components/editor/EditorToolbar";
 import PresenceBar from "@/components/presence/PresenceBar";
 import DebugPanel from "@/components/editor/DebugPanel";
 import AccessibilityAnnouncer from "@/components/AccessibilityAnnouncer";
-import type { EditorLanguage } from "@code-duo/shared/src/types";
-import { YJS_TEXT_KEY } from "@code-duo/shared/src/constants";
+import type { EditorLanguage } from "@code-duo/shared";
+import { YJS_TEXT_KEY } from "@code-duo/shared";
 import { Users } from "lucide-react";
 
 interface RoomClientProps {

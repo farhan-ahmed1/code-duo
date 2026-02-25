@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import type { EditorLanguage } from "@code-duo/shared/src/types";
-import { DEFAULT_LANGUAGE } from "@code-duo/shared/src/constants";
+import type { EditorLanguage } from "@code-duo/shared";
+import { DEFAULT_LANGUAGE } from "@code-duo/shared";
 
 const THEME_STORAGE_KEY = "code-duo:theme";
 

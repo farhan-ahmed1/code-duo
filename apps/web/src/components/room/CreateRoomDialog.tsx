@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import {
   SUPPORTED_LANGUAGES,
   DEFAULT_LANGUAGE,
-} from "@code-duo/shared/src/constants";
-import type { EditorLanguage } from "@code-duo/shared/src/types";
+} from "@code-duo/shared";
+import type { EditorLanguage } from "@code-duo/shared";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 import {

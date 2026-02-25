@@ -1,5 +1,5 @@
 import { customAlphabet } from "nanoid";
-import { ROOM_ID_LENGTH } from "@code-duo/shared/src/constants";
+import { ROOM_ID_LENGTH } from "@code-duo/shared";
 
 // URL-safe alphabet without ambiguous characters (0, O, I, l)
 const nanoid = customAlphabet(

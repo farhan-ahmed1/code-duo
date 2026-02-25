@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { User } from "@code-duo/shared/src/types";
+import type { User } from "@code-duo/shared";
 import {
   Tooltip,
   TooltipContent,

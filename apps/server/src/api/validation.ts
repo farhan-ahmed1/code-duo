@@ -2,8 +2,8 @@ import { MiddlewareHandler } from "hono";
 import {
   SUPPORTED_LANGUAGES,
   MAX_ROOM_NAME_LENGTH,
-} from "@code-duo/shared/src/constants";
-import type { EditorLanguage } from "@code-duo/shared/src/types";
+} from "@code-duo/shared";
+import type { EditorLanguage } from "@code-duo/shared";
 
 // ── Constants ──────────────────────────────────────────────────────
 

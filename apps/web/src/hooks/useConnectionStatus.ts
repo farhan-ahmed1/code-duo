@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { WebsocketProvider } from "y-websocket";
-import type { ConnectionStatus, SyncStatus } from "@code-duo/shared/src/types";
+import type { ConnectionStatus, SyncStatus } from "@code-duo/shared";
 
 /**
  * Tracks the connection and sync status of a Yjs WebSocket provider.

@@ -29,14 +29,6 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@code-duo/shared/src/constants": path.resolve(
-        __dirname,
-        "../../packages/shared/src/constants.ts",
-      ),
-      "@code-duo/shared/src/types": path.resolve(
-        __dirname,
-        "../../packages/shared/src/types.ts",
-      ),
       "@code-duo/shared": path.resolve(
         __dirname,
         "../../packages/shared/src/index.ts",
