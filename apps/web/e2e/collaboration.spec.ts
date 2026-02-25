@@ -77,7 +77,7 @@ test.describe("Full-flow integration", () => {
 
     // Fill in room name, pick Python as the language
     await creator.fill('input[placeholder="My Coding Session"]', "Integration Test Room");
-    await creator.selectOption("select", "python");
+    await creator.selectOption('[role="dialog"] select', "python");
     await creator.locator('[role="dialog"] button[type="submit"]').click();
 
     // Should navigate to /room/<id>
@@ -403,7 +403,7 @@ test.describe("Real-time collaboration", () => {
     await page.goto(BASE_URL);
 
     // Open the Join Room dialog
-    await page.click('button[aria-label="Join an existing room"]');
+    await page.locator('button[aria-label="Join an existing room"]').first().click();
     await page.waitForSelector('[role="dialog"]', { timeout: 5_000 });
 
     // Enter room code and join
