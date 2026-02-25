@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-02-24T06:02:59.891Z",
+  "timestamp": "2026-02-25T04:33:58.921Z",
   "editPropagationLatency": [
     {
       "concurrentUsers": 1,
@@ -120,6 +120,20 @@
       "max": 199
     },
     {
+      "concurrentUsers": 1,
+      "samples": [
+        216,
+        81,
+        78,
+        202,
+        114
+      ],
+      "min": 78,
+      "p50": 114,
+      "p95": 216,
+      "max": 216
+    },
+    {
       "concurrentUsers": 3,
       "samples": [
         342,
@@ -236,6 +250,20 @@
       "p50": 140,
       "p95": 209,
       "max": 209
+    },
+    {
+      "concurrentUsers": 3,
+      "samples": [
+        181,
+        111,
+        92,
+        162,
+        100
+      ],
+      "min": 92,
+      "p50": 111,
+      "p95": 181,
+      "max": 181
     },
     {
       "concurrentUsers": 5,
@@ -356,6 +384,20 @@
       "max": 277
     },
     {
+      "concurrentUsers": 5,
+      "samples": [
+        246,
+        170,
+        158,
+        200,
+        146
+      ],
+      "min": 146,
+      "p50": 170,
+      "p95": 246,
+      "max": 246
+    },
+    {
       "concurrentUsers": 10,
       "samples": [
         1153,
@@ -472,6 +514,20 @@
       "p50": 559,
       "p95": 645,
       "max": 645
+    },
+    {
+      "concurrentUsers": 10,
+      "samples": [
+        721,
+        362,
+        438,
+        338,
+        562
+      ],
+      "min": 338,
+      "p50": 438,
+      "p95": 721,
+      "max": 721
     }
   ],
   "documentLoadTime": [
