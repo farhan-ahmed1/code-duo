@@ -68,4 +68,72 @@ describe("DocumentStore", () => {
     store.deleteDocument("to-delete");
     expect(store.loadDocument("to-delete")).toBeNull();
   });
+
+  it("delete is a no-op for non-existent room", () => {
+    expect(() => store.deleteDocument("nonexistent")).not.toThrow();
+  });
+
+  it("handles concurrent writes to the same room", () => {
+    // Simulate two clients producing different states
+    const doc1 = new Y.Doc();
+    doc1.getText("content").insert(0, "Client A");
+    store.saveDocument("concurrent-room", Y.encodeStateAsUpdate(doc1));
+
+    const doc2 = new Y.Doc();
+    doc2.getText("content").insert(0, "Client B");
+    store.saveDocument("concurrent-room", Y.encodeStateAsUpdate(doc2));
+
+    // Last write wins at the storage level
+    const loaded = store.loadDocument("concurrent-room");
+    expect(loaded).not.toBeNull();
+    const restored = new Y.Doc();
+    Y.applyUpdate(restored, loaded!);
+    expect(restored.getText("content").toString()).toBe("Client B");
+  });
+
+  it("preserves Yjs document with multiple text types", () => {
+    const ydoc = new Y.Doc();
+    ydoc.getText("monaco").insert(0, "code here");
+    ydoc.getText("notes").insert(0, "some notes");
+
+    store.saveDocument("multi-type", Y.encodeStateAsUpdate(ydoc));
+
+    const loaded = store.loadDocument("multi-type");
+    const restored = new Y.Doc();
+    Y.applyUpdate(restored, loaded!);
+    expect(restored.getText("monaco").toString()).toBe("code here");
+    expect(restored.getText("notes").toString()).toBe("some notes");
+  });
+
+  it("handles saving and loading empty documents", () => {
+    const ydoc = new Y.Doc();
+    store.saveDocument("empty-doc", Y.encodeStateAsUpdate(ydoc));
+
+    const loaded = store.loadDocument("empty-doc");
+    expect(loaded).not.toBeNull();
+    const restored = new Y.Doc();
+    Y.applyUpdate(restored, loaded!);
+    expect(restored.getText("content").toString()).toBe("");
+  });
+
+  it("handles multiple rooms independently", () => {
+    const doc1 = new Y.Doc();
+    doc1.getText("content").insert(0, "Room 1 content");
+    store.saveDocument("room-1", Y.encodeStateAsUpdate(doc1));
+
+    const doc2 = new Y.Doc();
+    doc2.getText("content").insert(0, "Room 2 content");
+    store.saveDocument("room-2", Y.encodeStateAsUpdate(doc2));
+
+    const loaded1 = store.loadDocument("room-1");
+    const loaded2 = store.loadDocument("room-2");
+
+    const restored1 = new Y.Doc();
+    Y.applyUpdate(restored1, loaded1!);
+    const restored2 = new Y.Doc();
+    Y.applyUpdate(restored2, loaded2!);
+
+    expect(restored1.getText("content").toString()).toBe("Room 1 content");
+    expect(restored2.getText("content").toString()).toBe("Room 2 content");
+  });
 });
