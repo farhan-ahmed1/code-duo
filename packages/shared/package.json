@@ -13,12 +13,12 @@
       "default": "./dist/index.js"
     },
     "./src/constants": {
-      "types": "./dist/constants.d.ts",
-      "default": "./dist/constants.js"
+      "types": "./src/constants.ts",
+      "default": "./src/constants.ts"
     },
     "./src/types": {
-      "types": "./dist/types.d.ts",
-      "default": "./dist/types.js"
+      "types": "./src/types.ts",
+      "default": "./src/types.ts"
     }
   },
   "scripts": {
