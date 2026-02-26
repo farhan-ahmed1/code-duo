@@ -65,17 +65,34 @@ docker compose up
 
 ## Architecture overview
 
-```bash
-Browser A                     Node.js Server                  Browser B
-──────────────────────────    ──────────────────────────      ────────────────────────
-Monaco Editor                 Hono HTTP API                   Monaco Editor
-    │                             │                               │
-y-monaco binding              REST /api/rooms                 y-monaco binding
-    │                             │                               │
-Yjs Y.Doc ──── y-websocket ──► WebSocket relay ◄── y-websocket ── Yjs Y.Doc
-    │                             │                               │
-y-indexeddb                   SQLite (rooms +                 y-indexeddb
-(IndexedDB)                    documents tables)              (IndexedDB)
+```mermaid
+graph TD
+    subgraph A["Browser A"]
+        MA[Monaco Editor]
+        YA[Yjs Y.Doc]
+        IDB_A[(IndexedDB)]
+        MA <-->|y-monaco| YA
+        YA <-->|y-indexeddb| IDB_A
+    end
+
+    subgraph B["Browser B"]
+        MB[Monaco Editor]
+        YB[Yjs Y.Doc]
+        IDB_B[(IndexedDB)]
+        MB <-->|y-monaco| YB
+        YB <-->|y-indexeddb| IDB_B
+    end
+
+    subgraph S["Node.js Server"]
+        WS[WebSocket relay]
+        API[Hono REST API]
+        DB[(SQLite)]
+        WS <--> DB
+        API <--> DB
+    end
+
+    YA <-->|y-websocket| WS
+    YB <-->|y-websocket| WS
 ```
 
 A keystroke in Browser A is converted by `y-monaco` into a Yjs update — a binary-encoded operation tagged with a unique `clientID + clock`. The server relays it to every other client. Each client applies it locally; no server-side merge logic exists. If Browser B was offline and made concurrent edits, Yjs's CRDT merges both sets of operations deterministically when the connection is restored.
