@@ -24,7 +24,7 @@ Create a new collaboration room.
 ```
 
 | Field | Type | Required | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `name` | string | No | Human-readable room name. Max 100 characters, alphanumeric + spaces + punctuation (`- . , ! ? ' " ( ) & + # @ : ; /`). Defaults to `"My Room"` if omitted or empty. |
 | `language` | string | No | Initial editor language. Must be one of the [supported languages](#supported-languages). Defaults to `"typescript"`. |
 
@@ -84,7 +84,7 @@ List rooms, ordered by creation date (newest first).
 **Query parameters:**
 
 | Parameter | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `limit` | number | 20 | Maximum rooms to return. Capped at 100. |
 | `offset` | number | 0 | Number of rooms to skip (for pagination). |
 
@@ -200,7 +200,7 @@ This endpoint is intentionally outside the `/api` prefix so the rate limiter doe
 **Exposed metrics:**
 
 | Metric | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `codeduo_active_connections` | Gauge | Current number of open WebSocket connections |
 | `codeduo_active_rooms` | Gauge | Rooms with at least one connected user |
 | `codeduo_messages_total` | Counter | Total WebSocket messages received |
@@ -217,7 +217,7 @@ curl http://localhost:4000/metrics
 
 **Example output (excerpt):**
 
-```
+```bash
 # HELP codeduo_active_connections Number of active WebSocket connections
 # TYPE codeduo_active_connections gauge
 codeduo_active_connections 12
@@ -240,7 +240,7 @@ The WebSocket interface is used exclusively by the Yjs `y-websocket` provider. I
 
 ### Connecting
 
-```
+```bash
 ws://localhost:4000/yjs/:roomId
 ```
 
@@ -271,12 +271,13 @@ const provider = new WebsocketProvider(
 The y-websocket protocol uses a binary message format encoded with the [lib0 encoding library](https://github.com/dmonad/lib0). There are three message types:
 
 | Type | Direction | Description |
-|---|---|---|
+| --- | --- | --- |
 | `messageSync` (0) | Both | Initial document sync — clients exchange state vectors, then the server sends missing updates |
 | `messageAwareness` (1) | Both | Ephemeral awareness state (cursor positions, user info) |
 | `messageQueryAwareness` (3) | Client → Server | Request the current awareness states of all connected clients |
 
 The sync flow on connection:
+
 1. Client sends a **sync step 1** message containing its state vector (a summary of all operations it has seen).
 2. Server responds with a **sync step 2** message containing all updates the client hasn't seen yet, plus the server's own state vector.
 3. Client applies the updates and fires its `sync` event.
@@ -318,7 +319,7 @@ All error responses use the following JSON structure:
 ```
 
 | Status | When |
-|---|---|
+| --- | --- |
 | `400 Bad Request` | Invalid JSON body, invalid `name` (unsupported characters, too long), invalid `language` (not in the supported list) |
 | `404 Not Found` | Room ID does not exist (`GET /api/rooms/:id`) |
 | `413 Content Too Large` | Request body exceeds 64 KB |
@@ -340,7 +341,7 @@ curl -X POST http://localhost:4000/api/rooms \
 
 **Example 429:**
 
-```
+```bash
 HTTP/1.1 429 Too Many Requests
 Retry-After: 42
 Content-Type: application/json
@@ -354,7 +355,7 @@ Content-Type: application/json
 
 The `language` field on rooms must be one of:
 
-```
+```bash
 typescript  javascript  python  go  rust
 c           cpp         java    csharp  ruby
 php         html        css     json    markdown
@@ -367,7 +368,7 @@ These correspond directly to Monaco Editor language IDs.
 ## Rate Limits Summary
 
 | Endpoint | Limit | Window |
-|---|---|---|
+| --- | --- | --- |
 | `POST /api/rooms` | 10 requests per IP | 1 hour |
 | All other `/api/*` endpoints | 100 requests per IP | 1 minute |
 
