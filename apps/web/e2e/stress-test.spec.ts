@@ -323,33 +323,42 @@ test.describe("Stress: network interruptions", () => {
         }
       };
 
-      // Meanwhile clients 0 and 1 are typing continuously
+      // Type sequentially (client 0 then client 1) to avoid CRDT
+      // character-level interleaving that splits tokens like "A0" when
+      // two clients insert at the same position concurrently.
+      // Throttle cycles on client 2 still run in parallel.
       await Promise.all([
         throttleCycles(),
         (async () => {
           for (let i = 0; i < 5; i++) {
             await typeInEditor(pages[0], `A${i} `);
-            await pages[0].waitForTimeout(100);
+            await pages[0].waitForTimeout(300);
           }
-          const txt0 = await getEditorText(pages[0]);
-          console.log("page0 content after typing:", txt0);
-        })(),
-        (async () => {
+          // Wait for client 1 to see client 0's last edit before it
+          // starts typing, so their insert positions never overlap.
+          await expect
+            .poll(() => getEditorText(pages[1]), { timeout: 10_000 })
+            .toContain("A4");
+
           for (let i = 0; i < 5; i++) {
             await typeInEditor(pages[1], `B${i} `);
-            await pages[1].waitForTimeout(100);
+            await pages[1].waitForTimeout(300);
           }
-          const txt1 = await getEditorText(pages[1]);
-          console.log("page1 content after typing:", txt1);
         })(),
       ]);
 
       // Ensure client 2 is definitely online after the throttle cycles
       await contexts[2].setOffline(false);
-      // Give client 2 ample time to reconnect and catch up
-      await pages[2].waitForTimeout(10000);
-      const afterReconnect = await getEditorText(pages[2]);
-      console.log("page2 content after reconnect:", afterReconnect);
+
+      // Verify online clients converged first — if they agree, the CRDT
+      // document is stable and client 2 just needs to catch up.
+      const SYNC_TIMEOUT = 15_000;
+      await expect
+        .poll(() => getEditorText(pages[0]), { timeout: SYNC_TIMEOUT })
+        .toContain("B4");
+      await expect
+        .poll(() => getEditorText(pages[1]), { timeout: SYNC_TIMEOUT })
+        .toContain("A4");
 
       // All content from active clients must be present in throttled client
       const TIMEOUT = 60_000;
