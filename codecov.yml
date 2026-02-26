@@ -1,0 +1,36 @@
+codecov:
+  require_ci_to_pass: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "60...100"
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
+    patch:
+      default:
+        target: auto
+        threshold: 5%
+
+# Each package uploads separately so Codecov can resolve package-relative
+# SF: paths unambiguously. after_n_builds tells Codecov to wait for all 3
+# flag uploads before assembling the final combined report.
+flags:
+  server:
+    paths:
+      - apps/server/src/
+    carryforward: true
+    after_n_builds: 3
+  web:
+    paths:
+      - apps/web/src/
+    carryforward: true
+    after_n_builds: 3
+  shared:
+    paths:
+      - packages/shared/src/
+    carryforward: true
+    after_n_builds: 3
