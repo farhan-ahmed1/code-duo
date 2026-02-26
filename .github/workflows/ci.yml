@@ -78,8 +78,15 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Run unit tests
-        run: pnpm test:unit
+      - name: Run unit tests with coverage
+        run: pnpm test:unit --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: apps/server/coverage/lcov.info,apps/web/coverage/lcov.info,packages/shared/coverage/lcov.info
+          fail_ci_if_error: true
 
   e2e-tests:
     name: E2E Tests

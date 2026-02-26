@@ -2,10 +2,10 @@
 
 > Real-time collaborative code editing, powered by CRDTs.
 
-![Backend Coverage](https://img.shields.io/badge/backend_coverage-84%25-brightgreen)
-![Frontend Coverage](https://img.shields.io/badge/frontend_coverage-100%25-brightgreen)
-![Tests](https://img.shields.io/badge/tests-87_passing-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
+[![CI](https://github.com/farhan-ahmed1/code-duo/actions/workflows/ci.yml/badge.svg)](https://github.com/farhan-ahmed1/code-duo/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/farhan-ahmed1/code-duo/graph/badge.svg)](https://codecov.io/gh/farhan-ahmed1/code-duo)
+![GitHub last commit](https://img.shields.io/github/last-commit/farhan-ahmed1/code-duo)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 <!-- Replace with: ![Code Duo demo](public/demo.gif) once recorded -->
 
