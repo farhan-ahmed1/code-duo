@@ -147,17 +147,23 @@ export default function EditorToolbar({
                 role="status"
                 aria-label={`Connection status: ${statusLabel}`}
               >
-                <span className={`h-2 w-2 rounded-full ${statusColor}`} aria-hidden="true" />
+                <span
+                  className={`h-2 w-2 rounded-full ${statusColor}`}
+                  aria-hidden="true"
+                />
                 <span className="hidden sm:inline">{statusLabel}</span>
                 <HelpCircle className="h-3 w-3 opacity-50" aria-hidden="true" />
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="max-w-xs text-xs">
-              <p className="font-medium">Powered by CRDTs (Conflict-free Replicated Data Types)</p>
+              <p className="font-medium">
+                Powered by CRDTs (Conflict-free Replicated Data Types)
+              </p>
               <p className="mt-1 text-muted-foreground">
-                Your edits are synced in real-time using Yjs, a CRDT library that
-                guarantees all collaborators converge to the same document state —
-                even after network interruptions. No server-side conflict resolution needed.
+                Your edits are synced in real-time using Yjs, a CRDT library
+                that guarantees all collaborators converge to the same document
+                state — even after network interruptions. No server-side
+                conflict resolution needed.
               </p>
             </TooltipContent>
           </Tooltip>

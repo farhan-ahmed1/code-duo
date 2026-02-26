@@ -1,8 +1,8 @@
 const STATS = [
   { value: "<50ms", label: "Sync latency" },
-  { value: "100%",  label: "Conflict-free" },
-  { value: "0 KB",  label: "Data on our servers" },
-  { value: "∞",     label: "Concurrent editors" },
+  { value: "100%", label: "Conflict-free" },
+  { value: "0 KB", label: "Data on our servers" },
+  { value: "∞", label: "Concurrent editors" },
 ];
 
 export default function StatsSection() {

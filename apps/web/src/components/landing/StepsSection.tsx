@@ -11,7 +11,7 @@ const STEPS = [
     number: "01",
     title: "Create a room",
     desc: "Spin up a session in one click. Pick a language, name your room, and you're live.",
-    code: ['$ curl -X POST /api/rooms', '→ { "id": "abc-123" }'],
+    code: ["$ curl -X POST /api/rooms", '→ { "id": "abc-123" }'],
   },
   {
     number: "02",
@@ -51,7 +51,7 @@ export default function StepsSection() {
           });
         }
       },
-      { threshold: 0.3, rootMargin: "0px 0px -120px 0px" }
+      { threshold: 0.3, rootMargin: "0px 0px -120px 0px" },
     );
     observer.observe(ref.current);
     return () => observer.disconnect();
@@ -77,7 +77,11 @@ export default function StepsSection() {
                   fill="none"
                 >
                   <rect
-                    x="1" y="1" width="44" height="44" rx="10"
+                    x="1"
+                    y="1"
+                    width="44"
+                    height="44"
+                    rx="10"
                     stroke="#4d94ff"
                     strokeWidth="1.5"
                     strokeDasharray={PERIM}
@@ -128,19 +132,28 @@ export default function StepsSection() {
             <div key={step.number} className="step-content">
               <div
                 className="step-title"
-                style={{ opacity: boxLit ? 1 : 0.25, transition: "opacity 0.6s ease" }}
+                style={{
+                  opacity: boxLit ? 1 : 0.25,
+                  transition: "opacity 0.6s ease",
+                }}
               >
                 {step.title}
               </div>
               <div
                 className="step-desc"
-                style={{ opacity: boxLit ? 1 : 0.2, transition: "opacity 0.6s ease 0.15s" }}
+                style={{
+                  opacity: boxLit ? 1 : 0.2,
+                  transition: "opacity 0.6s ease 0.15s",
+                }}
               >
                 {step.desc}
               </div>
               <div
                 className="step-code"
-                style={{ opacity: boxLit ? 1 : 0.15, transition: "opacity 0.6s ease 0.3s" }}
+                style={{
+                  opacity: boxLit ? 1 : 0.15,
+                  transition: "opacity 0.6s ease 0.3s",
+                }}
               >
                 {step.code.map((line, j) => (
                   <div key={j}>{line}</div>

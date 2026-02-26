@@ -8,7 +8,9 @@ interface RoomPageProps {
   params: Promise<{ roomId: string }>;
 }
 
-export async function generateMetadata({ params }: RoomPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: RoomPageProps): Promise<Metadata> {
   const { roomId } = await params;
   let roomName = roomId;
 

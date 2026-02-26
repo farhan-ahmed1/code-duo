@@ -29,7 +29,11 @@ function runCleanup() {
     const purged = roomStore.purgeStaleRooms(ROOM_EXPIRY_DAYS);
 
     logger.info(
-      { purgedRooms: purged, purgedDocuments: staleIds.length, expiryDays: ROOM_EXPIRY_DAYS },
+      {
+        purgedRooms: purged,
+        purgedDocuments: staleIds.length,
+        expiryDays: ROOM_EXPIRY_DAYS,
+      },
       "Room cleanup completed",
     );
   } catch (err) {

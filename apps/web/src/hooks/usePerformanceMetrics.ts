@@ -47,7 +47,11 @@ function subscribe(callback: () => void): () => void {
 }
 
 function updateMetrics(patch: Partial<PerformanceMetrics>) {
-  currentMetrics = { ...currentMetrics, ...patch, lastUpdated: performance.now() };
+  currentMetrics = {
+    ...currentMetrics,
+    ...patch,
+    lastUpdated: performance.now(),
+  };
   listeners.forEach((l) => l());
 }
 
@@ -96,7 +100,9 @@ export function usePerformanceMetrics(
     function handleSync(synced: boolean) {
       if (synced && !hasRecordedSync.current) {
         hasRecordedSync.current = true;
-        const elapsed = Math.round(performance.now() - providerCreatedAt.current);
+        const elapsed = Math.round(
+          performance.now() - providerCreatedAt.current,
+        );
         updateMetrics({ initialSyncMs: elapsed });
       }
     }

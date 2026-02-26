@@ -23,10 +23,10 @@ Create a new collaboration room.
 }
 ```
 
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `name` | string | No | Human-readable room name. Max 100 characters, alphanumeric + spaces + punctuation (`- . , ! ? ' " ( ) & + # @ : ; /`). Defaults to `"My Room"` if omitted or empty. |
-| `language` | string | No | Initial editor language. Must be one of the [supported languages](#supported-languages). Defaults to `"typescript"`. |
+| Field      | Type   | Required | Description                                                                                                                                                         |
+| ---------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`     | string | No       | Human-readable room name. Max 100 characters, alphanumeric + spaces + punctuation (`- . , ! ? ' " ( ) & + # @ : ; /`). Defaults to `"My Room"` if omitted or empty. |
+| `language` | string | No       | Initial editor language. Must be one of the [supported languages](#supported-languages). Defaults to `"typescript"`.                                                |
 
 **Response `201 Created`:**
 
@@ -83,10 +83,10 @@ List rooms, ordered by creation date (newest first).
 
 **Query parameters:**
 
-| Parameter | Type | Default | Description |
-| --- | --- | --- | --- |
-| `limit` | number | 20 | Maximum rooms to return. Capped at 100. |
-| `offset` | number | 0 | Number of rooms to skip (for pagination). |
+| Parameter | Type   | Default | Description                               |
+| --------- | ------ | ------- | ----------------------------------------- |
+| `limit`   | number | 20      | Maximum rooms to return. Capped at 100.   |
+| `offset`  | number | 0       | Number of rooms to skip (for pagination). |
 
 **Response `200 OK`:**
 
@@ -199,12 +199,12 @@ This endpoint is intentionally outside the `/api` prefix so the rate limiter doe
 
 **Exposed metrics:**
 
-| Metric | Type | Description |
-| --- | --- | --- |
-| `codeduo_active_connections` | Gauge | Current number of open WebSocket connections |
-| `codeduo_active_rooms` | Gauge | Rooms with at least one connected user |
-| `codeduo_messages_total` | Counter | Total WebSocket messages received |
-| `codeduo_document_saves_total` | Counter | Total document persistence writes to SQLite |
+| Metric                                  | Type      | Description                                                   |
+| --------------------------------------- | --------- | ------------------------------------------------------------- |
+| `codeduo_active_connections`            | Gauge     | Current number of open WebSocket connections                  |
+| `codeduo_active_rooms`                  | Gauge     | Rooms with at least one connected user                        |
+| `codeduo_messages_total`                | Counter   | Total WebSocket messages received                             |
+| `codeduo_document_saves_total`          | Counter   | Total document persistence writes to SQLite                   |
 | `codeduo_http_request_duration_seconds` | Histogram | HTTP request latency, labelled by `method`, `route`, `status` |
 
 Standard Node.js process metrics (`process_cpu_seconds_total`, `nodejs_heap_size_bytes`, etc.) are also included via `collectDefaultMetrics`.
@@ -256,13 +256,13 @@ import { WebsocketProvider } from "y-websocket";
 
 const ydoc = new Y.Doc();
 const provider = new WebsocketProvider(
-  "ws://localhost:4000",  // server URL
-  "xK9mPqRt",            // room ID (used as the document name)
+  "ws://localhost:4000", // server URL
+  "xK9mPqRt", // room ID (used as the document name)
   ydoc,
   {
     connect: true,
     maxBackoffTime: 2500,
-  }
+  },
 );
 ```
 
@@ -270,11 +270,11 @@ const provider = new WebsocketProvider(
 
 The y-websocket protocol uses a binary message format encoded with the [lib0 encoding library](https://github.com/dmonad/lib0). There are three message types:
 
-| Type | Direction | Description |
-| --- | --- | --- |
-| `messageSync` (0) | Both | Initial document sync — clients exchange state vectors, then the server sends missing updates |
-| `messageAwareness` (1) | Both | Ephemeral awareness state (cursor positions, user info) |
-| `messageQueryAwareness` (3) | Client → Server | Request the current awareness states of all connected clients |
+| Type                        | Direction       | Description                                                                                   |
+| --------------------------- | --------------- | --------------------------------------------------------------------------------------------- |
+| `messageSync` (0)           | Both            | Initial document sync — clients exchange state vectors, then the server sends missing updates |
+| `messageAwareness` (1)      | Both            | Ephemeral awareness state (cursor positions, user info)                                       |
+| `messageQueryAwareness` (3) | Client → Server | Request the current awareness states of all connected clients                                 |
 
 The sync flow on connection:
 
@@ -289,10 +289,10 @@ The y-websocket provider handles reconnection automatically with exponential bac
 
 ```typescript
 const WS_RECONNECT_CONFIG = {
-  maxBackoffTime: 2500,       // ms — maximum delay between retries
+  maxBackoffTime: 2500, // ms — maximum delay between retries
   initialReconnectDelay: 100, // ms — first retry delay
-  maxReconnectDelay: 30_000,  // ms — hard ceiling on retry delay
-  bcChannelName: "code-duo",  // BroadcastChannel name for cross-tab sync
+  maxReconnectDelay: 30_000, // ms — hard ceiling on retry delay
+  bcChannelName: "code-duo", // BroadcastChannel name for cross-tab sync
 };
 ```
 
@@ -318,14 +318,14 @@ All error responses use the following JSON structure:
 { "error": "Human-readable error message" }
 ```
 
-| Status | When |
-| --- | --- |
-| `400 Bad Request` | Invalid JSON body, invalid `name` (unsupported characters, too long), invalid `language` (not in the supported list) |
-| `404 Not Found` | Room ID does not exist (`GET /api/rooms/:id`) |
-| `413 Content Too Large` | Request body exceeds 64 KB |
-| `429 Too Many Requests` | Rate limit exceeded. Includes a `Retry-After` header with the number of seconds to wait. |
-| `500 Internal Server Error` | Unhandled server exception |
-| `503 Service Unavailable` | Server not yet ready (`GET /api/health/ready` only) |
+| Status                      | When                                                                                                                 |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `400 Bad Request`           | Invalid JSON body, invalid `name` (unsupported characters, too long), invalid `language` (not in the supported list) |
+| `404 Not Found`             | Room ID does not exist (`GET /api/rooms/:id`)                                                                        |
+| `413 Content Too Large`     | Request body exceeds 64 KB                                                                                           |
+| `429 Too Many Requests`     | Rate limit exceeded. Includes a `Retry-After` header with the number of seconds to wait.                             |
+| `500 Internal Server Error` | Unhandled server exception                                                                                           |
+| `503 Service Unavailable`   | Server not yet ready (`GET /api/health/ready` only)                                                                  |
 
 **Example 400:**
 
@@ -336,7 +336,9 @@ curl -X POST http://localhost:4000/api/rooms \
 ```
 
 ```json
-{ "error": "Room name may only contain letters, numbers, spaces, and common punctuation (- . , ! ? ' \" ( ) & + # @ : ; /)" }
+{
+  "error": "Room name may only contain letters, numbers, spaces, and common punctuation (- . , ! ? ' \" ( ) & + # @ : ; /)"
+}
 ```
 
 **Example 429:**
@@ -367,9 +369,9 @@ These correspond directly to Monaco Editor language IDs.
 
 ## Rate Limits Summary
 
-| Endpoint | Limit | Window |
-| --- | --- | --- |
-| `POST /api/rooms` | 10 requests per IP | 1 hour |
+| Endpoint                     | Limit               | Window   |
+| ---------------------------- | ------------------- | -------- |
+| `POST /api/rooms`            | 10 requests per IP  | 1 hour   |
 | All other `/api/*` endpoints | 100 requests per IP | 1 minute |
 
 Rate limiting uses an in-memory sliding-window counter. See [ARCHITECTURE.md](architecture.md#scaling-considerations) for details on the behaviour under horizontal scaling and the recommended Redis upgrade path.

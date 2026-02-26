@@ -103,8 +103,9 @@ export default function CollaborativeEditor({
     if (typeof window !== "undefined") {
       (window as unknown as Record<string, unknown>).__codeDuoGetEditorValue =
         () => editor.getModel()?.getValue() ?? "";
-      (window as unknown as Record<string, unknown>).__codeDuoSetEditorValue =
-        (text: string) => editor.getModel()?.setValue(text);
+      (window as unknown as Record<string, unknown>).__codeDuoSetEditorValue = (
+        text: string,
+      ) => editor.getModel()?.setValue(text);
     }
     // Auto-focus the editor when entering a room
     editor.focus();
@@ -112,7 +113,11 @@ export default function CollaborativeEditor({
   }
 
   return (
-    <div className="relative h-full w-full" role="region" aria-label="Collaborative code editor">
+    <div
+      className="relative h-full w-full"
+      role="region"
+      aria-label="Collaborative code editor"
+    >
       {/* Subtle offline banner */}
       {status === "disconnected" && (
         <div
@@ -146,19 +151,23 @@ export default function CollaborativeEditor({
             <div className="flex flex-1 gap-4 p-4">
               <div className="flex flex-col gap-2">
                 {Array.from({ length: 18 }).map((_, i) => (
-                  <div key={i} className="h-3 w-6 animate-pulse rounded bg-gray-800/60" />
+                  <div
+                    key={i}
+                    className="h-3 w-6 animate-pulse rounded bg-gray-800/60"
+                  />
                 ))}
               </div>
               <div className="flex flex-1 flex-col gap-2">
-                {[85, 70, 55, 90, 40, 75, 60, 50, 80, 65, 45, 70, 55, 85, 30, 75, 60, 50].map(
-                  (w, i) => (
-                    <div
-                      key={i}
-                      className="h-3 animate-pulse rounded bg-gray-800/40"
-                      style={{ width: `${w}%` }}
-                    />
-                  ),
-                )}
+                {[
+                  85, 70, 55, 90, 40, 75, 60, 50, 80, 65, 45, 70, 55, 85, 30,
+                  75, 60, 50,
+                ].map((w, i) => (
+                  <div
+                    key={i}
+                    className="h-3 animate-pulse rounded bg-gray-800/40"
+                    style={{ width: `${w}%` }}
+                  />
+                ))}
               </div>
             </div>
           </div>

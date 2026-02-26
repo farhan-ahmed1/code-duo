@@ -20,7 +20,10 @@ export default function HomePage() {
   const [joinOpen, setJoinOpen] = useState(false);
   const handleCreate = () => setCreateOpen(true);
   const handleJoin = () => setJoinOpen(true);
-  const toast = useKeyboardShortcuts({ onCreateRoom: handleCreate, onJoinRoom: handleJoin });
+  const toast = useKeyboardShortcuts({
+    onCreateRoom: handleCreate,
+    onJoinRoom: handleJoin,
+  });
 
   return (
     <>
@@ -42,4 +45,3 @@ export default function HomePage() {
     </>
   );
 }
-

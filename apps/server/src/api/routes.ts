@@ -1,16 +1,14 @@
 import { Hono } from "hono";
 import { RoomStore } from "../persistence/room-store";
-import {
-  DEFAULT_LANGUAGE,
-  DEFAULT_PAGINATION_LIMIT,
-} from "@code-duo/shared";
+import { DEFAULT_LANGUAGE, DEFAULT_PAGINATION_LIMIT } from "@code-duo/shared";
 import { roomCreationRateLimit } from "./rate-limiter";
-import {
-  validateRoomName,
-  validateLanguage,
-} from "./validation";
+import { validateRoomName, validateLanguage } from "./validation";
 import { logger } from "../utils/logger";
-import { metricsRegistry, activeConnections, activeRooms } from "../utils/metrics";
+import {
+  metricsRegistry,
+  activeConnections,
+  activeRooms,
+} from "../utils/metrics";
 
 const roomStore = new RoomStore();
 export const apiRouter = new Hono();
@@ -145,9 +143,7 @@ apiRouter.get("/metrics", async (c) => {
 // ── Helpers ────────────────────────────────────────────────────────
 
 /** Safely read the current value from a prom-client Gauge. */
-function getGaugeValue(
-  gauge: import("prom-client").Gauge,
-): number {
+function getGaugeValue(gauge: import("prom-client").Gauge): number {
   try {
     // prom-client exposes an internal hashMap; fall back to 0 if
     // the private API changes.

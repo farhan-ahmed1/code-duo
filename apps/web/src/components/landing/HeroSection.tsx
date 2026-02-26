@@ -5,7 +5,10 @@ interface HeroSectionProps {
   onJoinRoom: () => void;
 }
 
-export default function HeroSection({ onCreateRoom, onJoinRoom }: HeroSectionProps) {
+export default function HeroSection({
+  onCreateRoom,
+  onJoinRoom,
+}: HeroSectionProps) {
   return (
     <section className="hero">
       <div className="container">
@@ -16,12 +19,24 @@ export default function HeroSection({ onCreateRoom, onJoinRoom }: HeroSectionPro
           <em>conflict-free</em>
         </h1>
         <p className="hero-sub fade-up delay-3">
-          Real-time collaborative editing powered by CRDTs. No merge hell,
-          no polling. Just open a room and code.
+          Real-time collaborative editing powered by CRDTs. No merge hell, no
+          polling. Just open a room and code.
         </p>
         <div className="hero-actions fade-up delay-4">
-          <button onClick={onCreateRoom} className="btn-primary-lg" aria-label="Start a new coding session">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+          <button
+            onClick={onCreateRoom}
+            className="btn-primary-lg"
+            aria-label="Start a new coding session"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              aria-hidden="true"
+            >
               <path d="M5 3l14 9-14 9V3z" />
             </svg>
             Start a session
@@ -36,8 +51,20 @@ export default function HeroSection({ onCreateRoom, onJoinRoom }: HeroSectionPro
               C
             </span>
           </button>
-          <button onClick={onJoinRoom} className="btn-secondary-lg" aria-label="Join an existing room">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <button
+            onClick={onJoinRoom}
+            className="btn-secondary-lg"
+            aria-label="Join an existing room"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
               <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" />
             </svg>
             Join room
@@ -52,33 +79,56 @@ export default function HeroSection({ onCreateRoom, onJoinRoom }: HeroSectionPro
         <div className="tagline-pills fade-up delay-5">
           <div className="pill">
             <div className="pill-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
               </svg>
             </div>
             <div>
               <div className="pill-title">Fast</div>
               <div className="pill-desc">
-                Syncs in under 50ms. WebSocket-native, no polling, no latency surprises.
+                Syncs in under 50ms. WebSocket-native, no polling, no latency
+                surprises.
               </div>
             </div>
           </div>
           <div className="pill">
             <div className="pill-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
               </svg>
             </div>
             <div>
               <div className="pill-title">Intelligent</div>
               <div className="pill-desc">
-                Yjs CRDTs merge concurrent edits deterministically. Zero conflict resolution.
+                Yjs CRDTs merge concurrent edits deterministically. Zero
+                conflict resolution.
               </div>
             </div>
           </div>
           <div className="pill">
             <div className="pill-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <path d="M23 21v-2a4 4 0 00-3-3.87" />
@@ -88,7 +138,8 @@ export default function HeroSection({ onCreateRoom, onJoinRoom }: HeroSectionPro
             <div>
               <div className="pill-title">Collaborative</div>
               <div className="pill-desc">
-                Live cursors with name labels, presence indicators, and room sharing in one click.
+                Live cursors with name labels, presence indicators, and room
+                sharing in one click.
               </div>
             </div>
           </div>

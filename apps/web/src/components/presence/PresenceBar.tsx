@@ -106,7 +106,11 @@ export default function PresenceBar({
       )}
 
       {/* User list */}
-      <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2" role="list" aria-label="Connected users">
+      <div
+        className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2"
+        role="list"
+        aria-label="Connected users"
+      >
         {localUser && (
           <UserBadge
             key={localUser.id}
@@ -121,7 +125,9 @@ export default function PresenceBar({
             key={user.id}
             user={user}
             connectedAt={user.connectedAt}
-            onScrollTo={onScrollToUser ? () => onScrollToUser(user.id) : undefined}
+            onScrollTo={
+              onScrollToUser ? () => onScrollToUser(user.id) : undefined
+            }
           />
         ))}
 

@@ -13,12 +13,7 @@
  *   pnpm test:e2e --project=stress
  */
 
-import {
-  test,
-  expect,
-  type Page,
-  type BrowserContext,
-} from "@playwright/test";
+import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
@@ -76,7 +71,10 @@ async function getEditorText(page: Page): Promise<string> {
   return page.evaluate(() => {
     // Prefer the test hook injected by CollaborativeEditor on editor mount.
     // This is reliable regardless of how Monaco's AMD loader is configured.
-    type TestWindow = { __codeDuoGetEditorValue?: () => string; monaco?: { editor?: { getModels?: () => Array<{ getValue(): string }> } } };
+    type TestWindow = {
+      __codeDuoGetEditorValue?: () => string;
+      monaco?: { editor?: { getModels?: () => Array<{ getValue(): string }> } };
+    };
     const w = window as unknown as TestWindow;
     if (typeof w.__codeDuoGetEditorValue === "function") {
       return w.__codeDuoGetEditorValue();
@@ -97,7 +95,9 @@ async function setupRoom(
   const pages: Page[] = [];
 
   for (let i = 0; i < n; i++) {
-    const ctx = await (browser as { newContext(): Promise<BrowserContext> }).newContext();
+    const ctx = await (
+      browser as { newContext(): Promise<BrowserContext> }
+    ).newContext();
     const page = await ctx.newPage();
     await page.goto(roomUrl);
     contexts.push(ctx);
@@ -130,7 +130,11 @@ test.describe("Stress: 5 concurrent users", () => {
     const roomUrl = `${BASE_URL}/room/${roomId}`;
     const USER_COUNT = 5;
 
-    const { contexts, pages } = await setupRoom(browser as never, USER_COUNT, roomUrl);
+    const { contexts, pages } = await setupRoom(
+      browser as never,
+      USER_COUNT,
+      roomUrl,
+    );
 
     try {
       // Type sequentially with short pauses so no user's insertText races
@@ -166,7 +170,11 @@ test.describe("Stress: 5 concurrent users", () => {
     const USER_COUNT = 5;
     const BURSTS = 3;
 
-    const { contexts, pages } = await setupRoom(browser as never, USER_COUNT, roomUrl);
+    const { contexts, pages } = await setupRoom(
+      browser as never,
+      USER_COUNT,
+      roomUrl,
+    );
 
     try {
       // Send bursts round-by-round.  Within each round, type sequentially
@@ -215,7 +223,11 @@ test.describe("Stress: network interruptions", () => {
     const USER_COUNT = 5;
     const OFFLINE_COUNT = 2; // users 0 and 1 go offline
 
-    const { contexts, pages } = await setupRoom(browser as never, USER_COUNT, roomUrl);
+    const { contexts, pages } = await setupRoom(
+      browser as never,
+      USER_COUNT,
+      roomUrl,
+    );
 
     try {
       // Let an initial edit propagate so all users share a baseline
@@ -230,9 +242,7 @@ test.describe("Stress: network interruptions", () => {
 
       // Take the first OFFLINE_COUNT users offline
       await Promise.all(
-        contexts
-          .slice(0, OFFLINE_COUNT)
-          .map((ctx) => ctx.setOffline(true)),
+        contexts.slice(0, OFFLINE_COUNT).map((ctx) => ctx.setOffline(true)),
       );
 
       // Offline users type their own content
@@ -252,9 +262,7 @@ test.describe("Stress: network interruptions", () => {
 
       // Bring offline users back online
       await Promise.all(
-        contexts
-          .slice(0, OFFLINE_COUNT)
-          .map((ctx) => ctx.setOffline(false)),
+        contexts.slice(0, OFFLINE_COUNT).map((ctx) => ctx.setOffline(false)),
       );
 
       // Allow time for y-websocket to reconnect with exponential backoff
@@ -425,9 +433,7 @@ test("IndexedDB persistence works after hard reload", async ({ browser }) => {
   await ctx.close();
 });
 
-test("WebSocket reconnects transparently after drop", async ({
-  browser,
-}) => {
+test("WebSocket reconnects transparently after drop", async ({ browser }) => {
   const roomId = await createRoom("WS Reconnect Test");
   const roomUrl = `${BASE_URL}/room/${roomId}`;
 

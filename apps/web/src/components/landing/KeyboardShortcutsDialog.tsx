@@ -25,24 +25,21 @@ const SHORTCUTS: Shortcut[] = [
 export default function KeyboardShortcutsDialog() {
   const [open, setOpen] = useState(false);
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      // Only trigger on "?" when no modifier keys and no input is focused
-      if (
-        e.key === "?" &&
-        !e.metaKey &&
-        !e.ctrlKey &&
-        !e.altKey &&
-        !["INPUT", "TEXTAREA", "SELECT"].includes(
-          (e.target as HTMLElement).tagName
-        )
-      ) {
-        e.preventDefault();
-        setOpen((prev) => !prev);
-      }
-    },
-    []
-  );
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Only trigger on "?" when no modifier keys and no input is focused
+    if (
+      e.key === "?" &&
+      !e.metaKey &&
+      !e.ctrlKey &&
+      !e.altKey &&
+      !["INPUT", "TEXTAREA", "SELECT"].includes(
+        (e.target as HTMLElement).tagName,
+      )
+    ) {
+      e.preventDefault();
+      setOpen((prev) => !prev);
+    }
+  }, []);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -83,7 +80,11 @@ export default function KeyboardShortcutsDialog() {
 
         <div className="mt-3 border-t border-white/[0.06] pt-3">
           <p className="text-center text-[11px] text-white/25">
-            Press <kbd className="mx-0.5 rounded border border-white/10 bg-white/[0.05] px-1 font-mono text-[10px] text-white/40">?</kbd> to toggle this dialog
+            Press{" "}
+            <kbd className="mx-0.5 rounded border border-white/10 bg-white/[0.05] px-1 font-mono text-[10px] text-white/40">
+              ?
+            </kbd>{" "}
+            to toggle this dialog
           </p>
         </div>
       </DialogContent>

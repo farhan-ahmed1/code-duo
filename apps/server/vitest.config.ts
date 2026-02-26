@@ -11,11 +11,11 @@ export default defineConfig({
       reportsDirectory: "./coverage",
       include: ["src/**/*.ts"],
       exclude: [
-        "src/index.ts",         // Entry point with side effects
-        "src/ws-server.ts",     // Integration-level, tested via E2E
-        "src/api/**",           // Route handlers tested via E2E
-        "src/jobs/**",          // Cron jobs tested via integration
-        "src/utils/logger.ts",  // Logging config, no logic to test
+        "src/index.ts", // Entry point with side effects
+        "src/ws-server.ts", // Integration-level, tested via E2E
+        "src/api/**", // Route handlers tested via E2E
+        "src/jobs/**", // Cron jobs tested via integration
+        "src/utils/logger.ts", // Logging config, no logic to test
         "src/utils/metrics.ts", // Prometheus setup, no logic to test
         "src/types/**",
       ],

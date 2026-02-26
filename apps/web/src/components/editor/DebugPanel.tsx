@@ -68,10 +68,7 @@ export default function DebugPanel({
           className={statusColor[connectionStatus]}
         />
         <Row label="Sync" value={syncStatus} />
-        <Row
-          label="Reconnections"
-          value={String(metrics.reconnectCount)}
-        />
+        <Row label="Reconnections" value={String(metrics.reconnectCount)} />
       </Section>
 
       {/* Timing */}
@@ -79,31 +76,21 @@ export default function DebugPanel({
         <Row
           label="Initial sync"
           value={
-            metrics.initialSyncMs !== null
-              ? `${metrics.initialSyncMs} ms`
-              : "—"
+            metrics.initialSyncMs !== null ? `${metrics.initialSyncMs} ms` : "—"
           }
         />
         <Row
           label="Edit latency (avg)"
           value={
-            metrics.editLatencyMs !== null
-              ? `${metrics.editLatencyMs} ms`
-              : "—"
+            metrics.editLatencyMs !== null ? `${metrics.editLatencyMs} ms` : "—"
           }
         />
       </Section>
 
       {/* Activity */}
       <Section title="Activity">
-        <Row
-          label="Remote updates"
-          value={String(metrics.remoteUpdates)}
-        />
-        <Row
-          label="Session uptime"
-          value={formatUptime(now)}
-        />
+        <Row label="Remote updates" value={String(metrics.remoteUpdates)} />
+        <Row label="Session uptime" value={formatUptime(now)} />
       </Section>
 
       <p className="mt-3 text-[10px] text-gray-600">

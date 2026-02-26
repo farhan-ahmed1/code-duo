@@ -6,7 +6,7 @@ Collaborative editing is a hard problem. When two people type at the same time w
 
 ## What Is a CRDT?
 
-**CRDT** stands for *Conflict-free Replicated Data Type*.
+**CRDT** stands for _Conflict-free Replicated Data Type_.
 
 The name is a mouthful, but the idea is simple: a CRDT is a data structure designed so that **multiple copies of it can be edited independently and then merged automatically, without any conflicts, no matter what order the edits arrive**.
 
@@ -14,11 +14,11 @@ Think about two people editing a shared document while temporarily offline. When
 
 To make that work, a CRDT must satisfy three mathematical properties:
 
-| Property | What it means in plain English |
-| --- | --- |
-| **Commutativity** | `merge(A, B) = merge(B, A)` — it doesn't matter which edit arrives first |
+| Property          | What it means in plain English                                                               |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| **Commutativity** | `merge(A, B) = merge(B, A)` — it doesn't matter which edit arrives first                     |
 | **Associativity** | `merge(merge(A, B), C) = merge(A, merge(B, C))` — it doesn't matter how you group the merges |
-| **Idempotency** | `merge(A, A) = A` — applying the same edit twice is safe; the duplicate is ignored |
+| **Idempotency**   | `merge(A, A) = A` — applying the same edit twice is safe; the duplicate is ignored           |
 
 These three properties together mean you can deliver updates in any order, over any number of hops, with duplicates and retries — and every replica will always converge to the same state. No server arbitration required.
 
@@ -30,7 +30,7 @@ Before CRDTs became practical, the dominant approach to collaborative editing wa
 
 ### How OT Works
 
-OT represents each edit as an *operation* (e.g. "insert 'x' at position 5"). When operations from two clients arrive at the server out of order, OT *transforms* them against each other to compensate for the intervening changes.
+OT represents each edit as an _operation_ (e.g. "insert 'x' at position 5"). When operations from two clients arrive at the server out of order, OT _transforms_ them against each other to compensate for the intervening changes.
 
 Example: Client A inserts at position 5 while Client B deletes at position 3. The server receives both. To apply Client A's insert correctly it must adjust the target position from 5 to 4 (because Client B's delete shifted everything left). That adjustment is the "transformation."
 
@@ -46,14 +46,14 @@ CRDTs take a different approach: instead of transforming operations after the fa
 
 Each character in a CRDT text document has a **globally unique, stable identifier** that never changes. Insert and delete operations reference these identifiers rather than positional indices. Because positions are stable, there is nothing to transform — operations commute naturally.
 
-| Dimension | OT | CRDT |
-| --- | --- | --- |
-| Conflict resolution | Transform operations at merge time | Encoded in the data structure |
-| Central server | Required for correctness | Not required |
-| Implementation complexity | High (many edge cases) | Moderate (complex data structure, simple merge) |
-| Scalability | Single point of coordination | Peer-to-peer capable |
-| Offline support | Possible but complex | First-class |
-| Undo semantics | Can be complex to implement | Straightforward with persistent history |
+| Dimension                 | OT                                 | CRDT                                            |
+| ------------------------- | ---------------------------------- | ----------------------------------------------- |
+| Conflict resolution       | Transform operations at merge time | Encoded in the data structure                   |
+| Central server            | Required for correctness           | Not required                                    |
+| Implementation complexity | High (many edge cases)             | Moderate (complex data structure, simple merge) |
+| Scalability               | Single point of coordination       | Peer-to-peer capable                            |
+| Offline support           | Possible but complex               | First-class                                     |
+| Undo semantics            | Can be complex to implement        | Straightforward with persistent history         |
 
 **When to use OT:** You control both the client and server, have a single central coordinator, and need very fine-grained real-time performance (OT can be faster for simple cases because the data structure is just a string).
 
@@ -201,7 +201,7 @@ A typical coding session generating a few thousand operations produces a state v
 
 ### Undo/Redo
 
-Yjs includes a `UndoManager` that operates on the CRDT level. It tracks operations from the *local* client only (not remote operations) and can invert them. This means undo only undoes your own changes, which is the correct behaviour in a collaborative editor — you should not undo your collaborator's work.
+Yjs includes a `UndoManager` that operates on the CRDT level. It tracks operations from the _local_ client only (not remote operations) and can invert them. This means undo only undoes your own changes, which is the correct behaviour in a collaborative editor — you should not undo your collaborator's work.
 
 Code Duo sets up the `UndoManager` through the `MonacoBinding`, scoped to the `Y.Text` instance for the editor content.
 
@@ -251,18 +251,18 @@ Deleted items become tombstones and remain in the data structure until GC runs. 
 
 **Q: Is a Yjs text document just a long linked list? Isn't that O(n) for random access?**
 
-Yes, the underlying structure is a linked list. Random access is O(n) in theory. In practice, Yjs maintains a *skip list* layer for faster position lookups, and the `MonacoBinding` batches position calculations. For documents up to a few million characters (far larger than any typical code file), the performance is acceptable.
+Yes, the underlying structure is a linked list. Random access is O(n) in theory. In practice, Yjs maintains a _skip list_ layer for faster position lookups, and the `MonacoBinding` batches position calculations. For documents up to a few million characters (far larger than any typical code file), the performance is acceptable.
 
 **Q: How does Yjs compare to Automerge?**
 
 Both implement CRDTs for collaborative text. The key differences from Code Duo's perspective:
 
-| | Yjs | Automerge |
-| --- | --- | --- |
-| Algorithm | YATA (linked list) | RGA (sequence CRDT) |
-| Monaco integration | Official `y-monaco` binding | Manual integration |
-| Encoding size | Very compact (binary, run-length) | Larger (JSON-based in v1; binary in v2) |
-| GC support | Built-in | Limited |
-| Ecosystem | y-websocket, y-indexeddb, y-webrtc | Automerge-repo (newer, active) |
+|                    | Yjs                                | Automerge                               |
+| ------------------ | ---------------------------------- | --------------------------------------- |
+| Algorithm          | YATA (linked list)                 | RGA (sequence CRDT)                     |
+| Monaco integration | Official `y-monaco` binding        | Manual integration                      |
+| Encoding size      | Very compact (binary, run-length)  | Larger (JSON-based in v1; binary in v2) |
+| GC support         | Built-in                           | Limited                                 |
+| Ecosystem          | y-websocket, y-indexeddb, y-webrtc | Automerge-repo (newer, active)          |
 
 Yjs was chosen because the ecosystem fit is better for this stack. See [ARCHITECTURE.md](architecture.md#yjs-over-automerge) for the full rationale.

@@ -37,10 +37,10 @@ async function waitForEditor(page: Page) {
  */
 async function typeInEditor(page: Page, text: string) {
   await page.click(".monaco-editor .view-lines");
-  await page.keyboard.press("Escape");   // dismiss autocomplete
-  await page.keyboard.press("End");       // move to end of line
+  await page.keyboard.press("Escape"); // dismiss autocomplete
+  await page.keyboard.press("End"); // move to end of line
   await page.keyboard.insertText(text);
-  await page.keyboard.press("Escape");   // dismiss autocomplete
+  await page.keyboard.press("Escape"); // dismiss autocomplete
 }
 
 /** Return the full plain-text content currently visible in Monaco.
@@ -48,7 +48,10 @@ async function typeInEditor(page: Page, text: string) {
  *  unlike reading DOM `.textContent` which may only return gutter numbers. */
 async function getEditorText(page: Page): Promise<string> {
   return page.evaluate(() => {
-    type TestWindow = { __codeDuoGetEditorValue?: () => string; monaco?: { editor?: { getModels?: () => Array<{ getValue(): string }> } } };
+    type TestWindow = {
+      __codeDuoGetEditorValue?: () => string;
+      monaco?: { editor?: { getModels?: () => Array<{ getValue(): string }> } };
+    };
     const w = window as unknown as TestWindow;
     if (typeof w.__codeDuoGetEditorValue === "function") {
       return w.__codeDuoGetEditorValue();
@@ -76,7 +79,10 @@ test.describe("Full-flow integration", () => {
     await creator.waitForSelector('[role="dialog"]', { timeout: 5_000 });
 
     // Fill in room name, pick Python as the language
-    await creator.fill('input[placeholder="My Coding Session"]', "Integration Test Room");
+    await creator.fill(
+      'input[placeholder="My Coding Session"]',
+      "Integration Test Room",
+    );
     await creator.selectOption('[role="dialog"] select', "python");
     await creator.locator('[role="dialog"] button[type="submit"]').click();
 
@@ -107,7 +113,10 @@ test.describe("Full-flow integration", () => {
 
     // ---- 4. Language change syncs --------------------------------------
     // Creator switches language to JavaScript
-    await creator.selectOption('select[aria-label="Editor language"]', "javascript");
+    await creator.selectOption(
+      'select[aria-label="Editor language"]',
+      "javascript",
+    );
 
     // Joiner's language dropdown should update
     await expect(
@@ -181,9 +190,7 @@ test.describe("Full-flow integration", () => {
 });
 
 test.describe("Real-time collaboration", () => {
-  test("two users see each other's edits in real time", async ({
-    browser,
-  }) => {
+  test("two users see each other's edits in real time", async ({ browser }) => {
     const roomId = await createRoom();
     const roomUrl = `${BASE_URL}/room/${roomId}`;
 
@@ -403,7 +410,10 @@ test.describe("Real-time collaboration", () => {
     await page.goto(BASE_URL);
 
     // Open the Join Room dialog
-    await page.locator('button[aria-label="Join an existing room"]').first().click();
+    await page
+      .locator('button[aria-label="Join an existing room"]')
+      .first()
+      .click();
     await page.waitForSelector('[role="dialog"]', { timeout: 5_000 });
 
     // Enter room code and join

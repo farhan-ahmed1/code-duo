@@ -74,7 +74,13 @@ export default function JoinRoomForm() {
         >
           {isLoading ? (
             <span className="flex items-center gap-1.5">
-              <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                className="h-3 w-3 animate-spin"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <circle cx="12" cy="12" r="10" className="opacity-25" />
                 <path d="M4 12a8 8 0 018-8" className="opacity-75" />
               </svg>
@@ -83,7 +89,16 @@ export default function JoinRoomForm() {
           ) : (
             <span className="flex items-center gap-1.5">
               Join
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M3 8h10M9 4l4 4-4 4" />
               </svg>
             </span>
@@ -91,7 +106,11 @@ export default function JoinRoomForm() {
         </Button>
       </div>
       {error && (
-        <p id="join-error" role="alert" className="mt-1.5 px-1 text-xs text-destructive font-medium">
+        <p
+          id="join-error"
+          role="alert"
+          className="mt-1.5 px-1 text-xs text-destructive font-medium"
+        >
           {error}
         </p>
       )}

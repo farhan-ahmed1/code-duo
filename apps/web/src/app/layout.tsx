@@ -36,7 +36,14 @@ export const metadata: Metadata = {
     title: "Code Duo — Real-time Collaborative Coding",
     description:
       "Real-time collaborative code editor powered by CRDTs. No merge conflicts, no polling. Open a room and start coding together.",
-    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "Code Duo — Real-time collaborative coding" }],
+    images: [
+      {
+        url: "/og-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "Code Duo — Real-time collaborative coding",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",

@@ -25,7 +25,8 @@ export default function RoomClient({ roomId }: RoomClientProps) {
   const { ydoc, provider, ytext, awareness } = useYjs(roomId);
   const { language, setLanguage } = useRoom(roomId, ydoc);
   const { remoteUsers } = useAwareness(awareness);
-  const { status: connectionStatus, syncStatus } = useConnectionStatus(provider);
+  const { status: connectionStatus, syncStatus } =
+    useConnectionStatus(provider);
   const { metrics } = usePerformanceMetrics(provider, ydoc);
 
   const theme = useEditorStore((s) => s.theme);
@@ -78,7 +79,11 @@ export default function RoomClient({ roomId }: RoomClientProps) {
   // Toggle debug panel with Ctrl/Cmd + Shift + D
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "d") {
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        e.shiftKey &&
+        e.key.toLowerCase() === "d"
+      ) {
         e.preventDefault();
         setDebugOpen((prev) => !prev);
       }
@@ -148,7 +153,9 @@ export default function RoomClient({ roomId }: RoomClientProps) {
             provider={provider}
             language={language}
             theme={theme}
-            onEditorReady={(editor) => { editorRef.current = editor; }}
+            onEditorReady={(editor) => {
+              editorRef.current = editor;
+            }}
           />
         </div>
 

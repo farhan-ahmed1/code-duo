@@ -8,7 +8,8 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGIN ?? "http://localhost:3000")
   .map((o) => o.trim());
 
 export const corsMiddleware = cors({
-  origin: (origin) => (ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]),
+  origin: (origin) =>
+    ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization"],
 });
@@ -46,6 +47,9 @@ export const requestLogger: MiddlewareHandler = async (c, next) => {
 };
 
 export const errorHandler: ErrorHandler = (err, c) => {
-  logger.error({ err, path: c.req.path, method: c.req.method, event: "unhandled_error" }, "Unhandled error");
+  logger.error(
+    { err, path: c.req.path, method: c.req.method, event: "unhandled_error" },
+    "Unhandled error",
+  );
   return c.json({ error: "Internal server error" }, 500);
 };

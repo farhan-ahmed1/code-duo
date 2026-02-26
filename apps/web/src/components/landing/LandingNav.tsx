@@ -11,34 +11,65 @@ interface LandingNavProps {
   onJoinRoom: () => void;
 }
 
-export default function LandingNav({ onCreateRoom, onJoinRoom }: LandingNavProps) {
+export default function LandingNav({
+  onCreateRoom,
+  onJoinRoom,
+}: LandingNavProps) {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const logoSrc = mounted && resolvedTheme === "light" ? "/logo-light.svg" : "/logo.svg";
+  const logoSrc =
+    mounted && resolvedTheme === "light" ? "/logo-light.svg" : "/logo.svg";
 
   return (
     <nav className="landing-nav" aria-label="Main navigation">
       <Link href="/" className="nav-logo">
-        <Image src={logoSrc} alt="CodeDuo logo" width={32} height={32} className="nav-logo-img" />
+        <Image
+          src={logoSrc}
+          alt="CodeDuo logo"
+          width={32}
+          height={32}
+          className="nav-logo-img"
+        />
         CodeDuo
       </Link>
       <ul className="nav-links">
-        <li><a href="#">Docs</a></li>
-        <li><a href="#">Blog</a></li>
-        <li><a href="#">Pricing</a></li>
         <li>
-          <a href="https://github.com/farhan-ahmed1/code-duo" target="_blank" rel="noopener noreferrer">
+          <a href="#">Docs</a>
+        </li>
+        <li>
+          <a href="#">Blog</a>
+        </li>
+        <li>
+          <a href="#">Pricing</a>
+        </li>
+        <li>
+          <a
+            href="https://github.com/farhan-ahmed1/code-duo"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             GitHub
           </a>
         </li>
       </ul>
       <div className="nav-right">
         <ThemeToggle />
-        <button onClick={onJoinRoom} className="btn-ghost" aria-label="Join an existing room">
-          Join room <span className="kbd" aria-hidden="true">J</span>
+        <button
+          onClick={onJoinRoom}
+          className="btn-ghost"
+          aria-label="Join an existing room"
+        >
+          Join room{" "}
+          <span className="kbd" aria-hidden="true">
+            J
+          </span>
         </button>
-        <button onClick={onCreateRoom} className="btn-primary" aria-label="Create a new room">
+        <button
+          onClick={onCreateRoom}
+          className="btn-primary"
+          aria-label="Create a new room"
+        >
           Create room{" "}
           <span
             className="kbd"

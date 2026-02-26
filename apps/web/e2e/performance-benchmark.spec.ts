@@ -84,7 +84,10 @@ function summarise(samples: number[]) {
   };
 }
 
-async function createRoom(name: string, language = "typescript"): Promise<string> {
+async function createRoom(
+  name: string,
+  language = "typescript",
+): Promise<string> {
   const res = await fetch(`${API_URL}/api/rooms`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -94,9 +97,9 @@ async function createRoom(name: string, language = "typescript"): Promise<string
     if (res.status === 429) {
       throw new Error(
         `createRoom failed: 429 (rate limit hit).\n` +
-        `The server's room-creation rate limit (10 rooms/hour) has been exceeded.\n` +
-        `Fix: restart the server with DISABLE_RATE_LIMIT=true, e.g.:\n` +
-        `  DISABLE_RATE_LIMIT=true pnpm --filter @code-duo/server dev`,
+          `The server's room-creation rate limit (10 rooms/hour) has been exceeded.\n` +
+          `Fix: restart the server with DISABLE_RATE_LIMIT=true, e.g.:\n` +
+          `  DISABLE_RATE_LIMIT=true pnpm --filter @code-duo/server dev`,
       );
     }
     throw new Error(`createRoom failed: ${res.status}`);
@@ -120,7 +123,12 @@ async function seedDocument(page: Page, sizeBytes: number): Promise<void> {
 
   // Inject via Monaco's setValue so Yjs picks it up
   await page.evaluate((text: string) => {
-    type TestWindow = { __codeDuoSetEditorValue?: (v: string) => void; monaco?: { editor?: { getModels?: () => Array<{ setValue(v: string): void }> } } };
+    type TestWindow = {
+      __codeDuoSetEditorValue?: (v: string) => void;
+      monaco?: {
+        editor?: { getModels?: () => Array<{ setValue(v: string): void }> };
+      };
+    };
     const w = window as unknown as TestWindow;
     if (typeof w.__codeDuoSetEditorValue === "function") {
       w.__codeDuoSetEditorValue(text);
@@ -224,7 +232,11 @@ test.describe("Benchmark: edit propagation latency", () => {
       // Measure latency from pages[0] → pages[1]
       // Extra users beyond 2 are present but idle (they contribute load to the
       // server's broadcast fan-out, which is realistic).
-      const samples = await measureLatencySamples(pages[0], pages[1], SAMPLE_COUNT);
+      const samples = await measureLatencySamples(
+        pages[0],
+        pages[1],
+        SAMPLE_COUNT,
+      );
       const summary = summarise(samples);
 
       const result: LatencyResult = { concurrentUsers: userCount, ...summary };
@@ -279,7 +291,9 @@ async function measureLoadTime(
 
     const t0 = Date.now();
     await page.goto(roomUrl, { waitUntil: "domcontentloaded" });
-    await page.waitForSelector(".monaco-editor .view-lines", { timeout: 30_000 });
+    await page.waitForSelector(".monaco-editor .view-lines", {
+      timeout: 30_000,
+    });
     results.push(Date.now() - t0);
 
     await ctx.close();
@@ -292,12 +306,14 @@ async function measureLoadTime(
 }
 
 test.describe("Benchmark: document load time", () => {
-  test("load time for 1 KB, 100 KB, and 1 MB documents", async ({ browser }) => {
+  test("load time for 1 KB, 100 KB, and 1 MB documents", async ({
+    browser,
+  }) => {
     test.setTimeout(180_000); // Seeding + measuring 3 document sizes in Firefox/WebKit
     const documentSizes: Array<{ label: string; bytes: number }> = [
-      { label: "1 KB",   bytes: 1_000 },
+      { label: "1 KB", bytes: 1_000 },
       { label: "100 KB", bytes: 100_000 },
-      { label: "1 MB",   bytes: 1_000_000 },
+      { label: "1 MB", bytes: 1_000_000 },
     ];
 
     const SAMPLE_COUNT = 4;
@@ -340,7 +356,9 @@ test.describe("Benchmark: document load time", () => {
     }
 
     // Soft assertion: 1 MB document must load in under 15 seconds.
-    const largestResult = loadResults.find((r) => r.documentSizeLabel === "1 MB");
+    const largestResult = loadResults.find(
+      (r) => r.documentSizeLabel === "1 MB",
+    );
     if (largestResult) {
       expect(
         largestResult.p95,
@@ -358,9 +376,11 @@ test.describe("Benchmark: document load time", () => {
 
 test.afterAll(async () => {
   const latencyResults =
-    ((globalThis as Record<string, unknown>).__latencyResults as LatencyResult[]) ?? [];
+    ((globalThis as Record<string, unknown>)
+      .__latencyResults as LatencyResult[]) ?? [];
   const loadResults =
-    ((globalThis as Record<string, unknown>).__loadResults as LoadTimeResult[]) ?? [];
+    ((globalThis as Record<string, unknown>)
+      .__loadResults as LoadTimeResult[]) ?? [];
 
   if (latencyResults.length === 0 && loadResults.length === 0) return;
 
@@ -372,7 +392,9 @@ test.afterAll(async () => {
   let existing: Partial<BenchmarkReport> = {};
   if (fs.existsSync(outputPath)) {
     try {
-      existing = JSON.parse(fs.readFileSync(outputPath, "utf-8")) as Partial<BenchmarkReport>;
+      existing = JSON.parse(
+        fs.readFileSync(outputPath, "utf-8"),
+      ) as Partial<BenchmarkReport>;
     } catch {
       // ignore parse errors — start fresh
     }
@@ -407,7 +429,9 @@ test.afterAll(async () => {
   console.log(
     "| Concurrent Users | min (ms) | p50 (ms) | p95 (ms) | max (ms) |",
   );
-  console.log("|------------------|----------|----------|----------|----------|");
+  console.log(
+    "|------------------|----------|----------|----------|----------|",
+  );
   for (const r of mergedLatency) {
     console.log(
       `| ${String(r.concurrentUsers).padEnd(16)} | ${String(r.min).padEnd(8)} | ${String(r.p50).padEnd(8)} | ${String(r.p95).padEnd(8)} | ${String(r.max).padEnd(8)} |`,
@@ -415,9 +439,7 @@ test.afterAll(async () => {
   }
 
   console.log("\n--- Document Load Time ---");
-  console.log(
-    "| Document Size | min (ms) | p50 (ms) | p95 (ms) | max (ms) |",
-  );
+  console.log("| Document Size | min (ms) | p50 (ms) | p95 (ms) | max (ms) |");
   console.log("|---------------|----------|----------|----------|----------|");
   for (const r of mergedLoad) {
     console.log(

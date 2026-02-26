@@ -1,8 +1,5 @@
 import { MiddlewareHandler } from "hono";
-import {
-  SUPPORTED_LANGUAGES,
-  MAX_ROOM_NAME_LENGTH,
-} from "@code-duo/shared";
+import { SUPPORTED_LANGUAGES, MAX_ROOM_NAME_LENGTH } from "@code-duo/shared";
 import type { EditorLanguage } from "@code-duo/shared";
 
 // ── Constants ──────────────────────────────────────────────────────
@@ -103,7 +100,9 @@ export const bodySizeLimit: MiddlewareHandler = async (c, next) => {
   const contentLength = c.req.header("content-length");
   if (contentLength && Number(contentLength) > MAX_BODY_SIZE) {
     return c.json(
-      { error: `Request body too large. Maximum size is ${MAX_BODY_SIZE} bytes.` },
+      {
+        error: `Request body too large. Maximum size is ${MAX_BODY_SIZE} bytes.`,
+      },
       413,
     );
   }

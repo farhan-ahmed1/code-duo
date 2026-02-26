@@ -41,16 +41,16 @@ graph TD
 
 Built with **Next.js 14** (App Router) and **React 18**.
 
-| Component | Role |
-| --- | --- |
-| `CollaborativeEditor` | Mounts Monaco; creates the `MonacoBinding` between Monaco and Yjs |
-| `y-websocket` provider | Opens a WebSocket to the server and syncs the `Y.Doc` |
-| `y-indexeddb` provider | Mirrors the `Y.Doc` in the browser's IndexedDB for offline support |
-| `useYjs` hook | Initialises the `Y.Doc`, both providers, and exposes the shared `Y.Text` and `Y.Map` |
+| Component                  | Role                                                                                                                       |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `CollaborativeEditor`      | Mounts Monaco; creates the `MonacoBinding` between Monaco and Yjs                                                          |
+| `y-websocket` provider     | Opens a WebSocket to the server and syncs the `Y.Doc`                                                                      |
+| `y-indexeddb` provider     | Mirrors the `Y.Doc` in the browser's IndexedDB for offline support                                                         |
+| `useYjs` hook              | Initialises the `Y.Doc`, both providers, and exposes the shared `Y.Text` and `Y.Map`                                       |
 | `useConnectionStatus` hook | Subscribes to `WebsocketProvider` events and exposes `connected / connecting / disconnected` plus `synced / syncing` state |
-| `useAwareness` hook | Reads the awareness state from the `WebsocketProvider` to drive the presence bar |
-| `PresenceBar` | Renders a live list of connected users with their colors and cursor names |
-| `EditorToolbar` | Language picker (synced via a shared `Y.Map`), theme toggle, connection status indicator |
+| `useAwareness` hook        | Reads the awareness state from the `WebsocketProvider` to drive the presence bar                                           |
+| `PresenceBar`              | Renders a live list of connected users with their colors and cursor names                                                  |
+| `EditorToolbar`            | Language picker (synced via a shared `Y.Map`), theme toggle, connection status indicator                                   |
 
 The text content lives in a `Y.Text` instance keyed as `"monaco"`. Room settings (language, theme) live in a `Y.Map` keyed as `"settings"`. Both are properties of the same `Y.Doc`, so they sync through the same WebSocket connection.
 
@@ -151,11 +151,11 @@ Document state is saved in two places:
 
 The persistence lifecycle is managed by `y-websocket`'s `setPersistence` hooks:
 
-| Hook | When it fires | What it does |
-| ------ | --------------- | -------------- |
-| `bindState` | First client connects to a room | Loads the saved `BLOB` from `documents` table and calls `Y.applyUpdate` on the fresh `Y.Doc` |
-| `writeState` (final flush) | Last client disconnects | Encodes the full document state with `Y.encodeStateAsUpdate` and saves to SQLite immediately |
-| Incremental save (debounced) | Any `Y.Doc` `"update"` event | Same as final flush but debounced to 2 seconds (`DOCUMENT_DEBOUNCE_MS`) to avoid thrashing |
+| Hook                         | When it fires                   | What it does                                                                                 |
+| ---------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------- |
+| `bindState`                  | First client connects to a room | Loads the saved `BLOB` from `documents` table and calls `Y.applyUpdate` on the fresh `Y.Doc` |
+| `writeState` (final flush)   | Last client disconnects         | Encodes the full document state with `Y.encodeStateAsUpdate` and saves to SQLite immediately |
+| Incremental save (debounced) | Any `Y.Doc` `"update"` event    | Same as final flush but debounced to 2 seconds (`DOCUMENT_DEBOUNCE_MS`) to avoid thrashing   |
 
 The SQLite `BLOB` is the raw output of `Y.encodeStateAsUpdate` — a compact binary encoding of all operations in the document's history. Loading it back is a single `Y.applyUpdate` call; Yjs handles the rest.
 
@@ -181,12 +181,12 @@ The current design handles this comfortably. SQLite in WAL mode can sustain hund
 
 The bottlenecks become:
 
-| Bottleneck | Current design | Upgrade path |
-| --- | --- | --- |
-| WebSocket fan-out | Single process, single event loop | Horizontal scaling with Redis pub/sub (`y-redis` or a custom adapter) so updates fan out across server instances |
-| Rate limiter | In-memory per-process counter — each instance tracks independently, an IP could exceed the global limit | Replace with a Redis-backed sliding-window counter |
-| SQLite write contention | Single writer; concurrent `writeState` calls serialise naturally via better-sqlite3's synchronous API | Migrate to PostgreSQL (or keep SQLite with a separate write queue) for true concurrent writes |
-| Document load time | Full document loaded into memory per room on first connection | Add a TTL-based in-memory cache so hot rooms don't hit SQLite on every reconnect |
+| Bottleneck              | Current design                                                                                          | Upgrade path                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| WebSocket fan-out       | Single process, single event loop                                                                       | Horizontal scaling with Redis pub/sub (`y-redis` or a custom adapter) so updates fan out across server instances |
+| Rate limiter            | In-memory per-process counter — each instance tracks independently, an IP could exceed the global limit | Replace with a Redis-backed sliding-window counter                                                               |
+| SQLite write contention | Single writer; concurrent `writeState` calls serialise naturally via better-sqlite3's synchronous API   | Migrate to PostgreSQL (or keep SQLite with a separate write queue) for true concurrent writes                    |
+| Document load time      | Full document loaded into memory per room on first connection                                           | Add a TTL-based in-memory cache so hot rooms don't hit SQLite on every reconnect                                 |
 
 ### 10,000+ concurrent users / global deployment
 
@@ -245,7 +245,7 @@ Results are written to `apps/web/e2e/benchmark-results.json` after each run.
 Time from a keystroke on Client A until the change is visible on Client B, with varying numbers of idle users in the same room.
 
 | Concurrent Users | p50 (ms) | p95 (ms) | max (ms) |
-|------------------|----------|----------|----------|
+| ---------------- | -------- | -------- | -------- |
 | 1                | 134      | 297      | 297      |
 | 3                | 231      | 342      | 342      |
 | 5                | 337      | 448      | 448      |
@@ -258,7 +258,7 @@ _All measurements taken on localhost (same machine as server). Production figure
 Time from `page.goto(roomUrl)` until Monaco is interactive, across document sizes.
 
 | Document Size | p50 (ms) | p95 (ms) |
-|---------------|----------|----------|
+| ------------- | -------- | -------- |
 | 1 KB          | 1209     | 1611     |
 | 100 KB        | 1134     | 1149     |
 | 1 MB          | 1085     | 1205     |
@@ -267,18 +267,18 @@ The flat curve across document sizes reflects IndexedDB loading the local snapsh
 
 ## Tech Stack Summary
 
-| Layer | Technology | Version |
-| --- | --- | --- |
-| Frontend framework | Next.js (App Router) | 14 |
-| UI components | React | 18 |
-| Code editor | Monaco Editor | via `@monaco-editor/react` |
-| CRDT library | Yjs | latest |
-| WebSocket sync | y-websocket | latest |
-| Offline sync | y-indexeddb | latest |
-| Editor binding | y-monaco | latest |
-| HTTP framework | Hono | latest |
-| WebSocket server | ws | latest |
-| Database | SQLite via better-sqlite3 | latest |
-| Metrics | prom-client | latest |
-| Logging | Pino | latest |
-| Monorepo | Turborepo + pnpm workspaces | latest |
+| Layer              | Technology                  | Version                    |
+| ------------------ | --------------------------- | -------------------------- |
+| Frontend framework | Next.js (App Router)        | 14                         |
+| UI components      | React                       | 18                         |
+| Code editor        | Monaco Editor               | via `@monaco-editor/react` |
+| CRDT library       | Yjs                         | latest                     |
+| WebSocket sync     | y-websocket                 | latest                     |
+| Offline sync       | y-indexeddb                 | latest                     |
+| Editor binding     | y-monaco                    | latest                     |
+| HTTP framework     | Hono                        | latest                     |
+| WebSocket server   | ws                          | latest                     |
+| Database           | SQLite via better-sqlite3   | latest                     |
+| Metrics            | prom-client                 | latest                     |
+| Logging            | Pino                        | latest                     |
+| Monorepo           | Turborepo + pnpm workspaces | latest                     |

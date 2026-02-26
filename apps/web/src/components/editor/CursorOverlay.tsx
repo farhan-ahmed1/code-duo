@@ -170,9 +170,7 @@ export default function CursorOverlay({
   useEffect(() => {
     if (!awareness) return;
 
-    function handleChange(
-      { removed }: { removed: number[] },
-    ) {
+    function handleChange({ removed }: { removed: number[] }) {
       for (const id of removed) {
         lastPositionsRef.current.delete(id);
         const timer = fadeTimersRef.current.get(id);

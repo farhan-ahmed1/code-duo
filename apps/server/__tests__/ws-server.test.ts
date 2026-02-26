@@ -13,7 +13,7 @@ describe("WebSocket server", () => {
     docA.on("update", (update: Uint8Array) => {
       Y.applyUpdate(docB, update);
     });
-    
+
     docA.getText("monaco").insert(0, "hello");
 
     expect(docB.getText("monaco").toString()).toBe("hello");

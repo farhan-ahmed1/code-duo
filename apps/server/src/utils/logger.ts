@@ -43,8 +43,10 @@ export const logger = pino({
  * log.info({ event: "doc_save", duration: 12 }, "Document persisted");
  * ```
  */
-export function createContextLogger(
-  ctx: { roomId?: string; userId?: string; [key: string]: unknown },
-) {
+export function createContextLogger(ctx: {
+  roomId?: string;
+  userId?: string;
+  [key: string]: unknown;
+}) {
   return logger.child(ctx);
 }

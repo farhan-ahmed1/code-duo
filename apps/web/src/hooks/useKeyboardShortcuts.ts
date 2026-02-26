@@ -20,7 +20,10 @@ interface ShortcutCallbacks {
  *
  * Returns toast state so the parent can render a non-blocking notification.
  */
-export function useKeyboardShortcuts({ onCreateRoom, onJoinRoom }: ShortcutCallbacks) {
+export function useKeyboardShortcuts({
+  onCreateRoom,
+  onJoinRoom,
+}: ShortcutCallbacks) {
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({
     message: "",
     visible: false,
@@ -35,7 +38,7 @@ export function useKeyboardShortcuts({ onCreateRoom, onJoinRoom }: ShortcutCallb
     function handleKeyDown(e: KeyboardEvent) {
       const mod = e.metaKey || e.ctrlKey;
       const inInput = ["INPUT", "TEXTAREA", "SELECT"].includes(
-        (e.target as HTMLElement).tagName
+        (e.target as HTMLElement).tagName,
       );
 
       // Cmd/Ctrl + S — prevent browser save, show auto-saved toast

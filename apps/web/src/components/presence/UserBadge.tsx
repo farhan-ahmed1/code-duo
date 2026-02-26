@@ -166,7 +166,9 @@ export default function UserBadge({
             <p className="mt-1 text-muted-foreground">Click to edit name</p>
           )}
           {!isLocal && onScrollTo && (
-            <p className="mt-1 text-muted-foreground">Click to jump to cursor</p>
+            <p className="mt-1 text-muted-foreground">
+              Click to jump to cursor
+            </p>
           )}
         </TooltipContent>
       </Tooltip>

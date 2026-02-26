@@ -37,7 +37,10 @@ function scheduleSave(roomId: string, ydoc: Y.Doc) {
     documentStore.saveDocument(roomId, state);
     documentSavesTotal.inc();
     const duration = Math.round(performance.now() - start);
-    logger.info({ roomId, event: "doc_persist", duration, bytes: state.byteLength }, "Document persisted");
+    logger.info(
+      { roomId, event: "doc_persist", duration, bytes: state.byteLength },
+      "Document persisted",
+    );
     saveTimers.delete(roomId);
   }, DOCUMENT_DEBOUNCE_MS);
 
@@ -54,7 +57,10 @@ setPersistence({
     if (saved) {
       Y.applyUpdate(ydoc, saved);
       const duration = Math.round(performance.now() - start);
-      logger.info({ roomId, event: "doc_restore", duration, bytes: saved.byteLength }, "Document state restored from storage");
+      logger.info(
+        { roomId, event: "doc_restore", duration, bytes: saved.byteLength },
+        "Document state restored from storage",
+      );
     }
     // Schedule incremental saves on every update
     ydoc.on("update", () => scheduleSave(roomId, ydoc));
@@ -65,7 +71,10 @@ setPersistence({
     documentStore.saveDocument(roomId, state);
     documentSavesTotal.inc();
     const duration = Math.round(performance.now() - start);
-    logger.info({ roomId, event: "doc_flush", duration, bytes: state.byteLength }, "Document state flushed on last disconnect");
+    logger.info(
+      { roomId, event: "doc_flush", duration, bytes: state.byteLength },
+      "Document state flushed on last disconnect",
+    );
   },
 });
 

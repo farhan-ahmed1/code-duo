@@ -38,18 +38,14 @@ describe("useConnectionStatus", () => {
 
   it("defaults to connecting / syncing before any events", () => {
     const provider = createMockProvider();
-    const { result } = renderHook(() =>
-      useConnectionStatus(provider),
-    );
+    const { result } = renderHook(() => useConnectionStatus(provider));
     expect(result.current.status).toBe("connecting");
     expect(result.current.syncStatus).toBe("syncing");
   });
 
   it("updates status to connected on status event", () => {
     const provider = createMockProvider();
-    const { result } = renderHook(() =>
-      useConnectionStatus(provider),
-    );
+    const { result } = renderHook(() => useConnectionStatus(provider));
 
     act(() => {
       provider.emit("status", { status: "connected" });
@@ -60,9 +56,7 @@ describe("useConnectionStatus", () => {
 
   it("updates status to disconnected on status event", () => {
     const provider = createMockProvider();
-    const { result } = renderHook(() =>
-      useConnectionStatus(provider),
-    );
+    const { result } = renderHook(() => useConnectionStatus(provider));
 
     act(() => {
       provider.emit("status", { status: "connected" });
@@ -77,9 +71,7 @@ describe("useConnectionStatus", () => {
 
   it("updates syncStatus to synced when sync event fires true", () => {
     const provider = createMockProvider();
-    const { result } = renderHook(() =>
-      useConnectionStatus(provider),
-    );
+    const { result } = renderHook(() => useConnectionStatus(provider));
 
     act(() => {
       provider.emit("sync", true);
@@ -90,9 +82,7 @@ describe("useConnectionStatus", () => {
 
   it("updates syncStatus to syncing when sync event fires false", () => {
     const provider = createMockProvider();
-    const { result } = renderHook(() =>
-      useConnectionStatus(provider),
-    );
+    const { result } = renderHook(() => useConnectionStatus(provider));
 
     act(() => {
       provider.emit("sync", true);
@@ -107,9 +97,7 @@ describe("useConnectionStatus", () => {
 
   it("cleans up event listeners on unmount", () => {
     const provider = createMockProvider();
-    const { unmount } = renderHook(() =>
-      useConnectionStatus(provider),
-    );
+    const { unmount } = renderHook(() => useConnectionStatus(provider));
 
     expect(provider.getListenerCount("status")).toBe(1);
     expect(provider.getListenerCount("sync")).toBe(1);
@@ -141,9 +129,7 @@ describe("useConnectionStatus", () => {
 
   it("handles full connection lifecycle: connecting → connected → synced → disconnected", () => {
     const provider = createMockProvider();
-    const { result } = renderHook(() =>
-      useConnectionStatus(provider),
-    );
+    const { result } = renderHook(() => useConnectionStatus(provider));
 
     // Initial state
     expect(result.current.status).toBe("connecting");

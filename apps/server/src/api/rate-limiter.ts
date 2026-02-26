@@ -42,17 +42,14 @@ class SlidingWindowRateLimiter {
         this.previousWindow = this.currentWindow;
       }
       this.currentWindow = new Map();
-      this.currentWindowStart =
-        now - (elapsed % this.windowMs); // align to window boundary
+      this.currentWindowStart = now - (elapsed % this.windowMs); // align to window boundary
     }
 
     // Weighted count: previous window's contribution decreases linearly
-    const windowProgress =
-      (now - this.currentWindowStart) / this.windowMs;
+    const windowProgress = (now - this.currentWindowStart) / this.windowMs;
     const prevCount = this.previousWindow.get(key) ?? 0;
     const currCount = this.currentWindow.get(key) ?? 0;
-    const estimatedCount =
-      prevCount * (1 - windowProgress) + currCount;
+    const estimatedCount = prevCount * (1 - windowProgress) + currCount;
 
     if (estimatedCount >= this.maxRequests) {
       // Estimate when the window will slide enough to allow a new request
@@ -86,10 +83,13 @@ const apiRequestLimiter = new SlidingWindowRateLimiter(
 );
 
 // Clean up stale entries every 10 minutes
-setInterval(() => {
-  roomCreationLimiter.cleanup();
-  apiRequestLimiter.cleanup();
-}, 10 * 60 * 1000).unref();
+setInterval(
+  () => {
+    roomCreationLimiter.cleanup();
+    apiRequestLimiter.cleanup();
+  },
+  10 * 60 * 1000,
+).unref();
 
 // ── Helper to extract client IP ────────────────────────────────────
 

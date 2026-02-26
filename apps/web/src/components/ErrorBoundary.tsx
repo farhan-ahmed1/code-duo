@@ -29,14 +29,21 @@ function categorizeError(error: Error): ErrorCategory {
     return "monaco";
   }
 
-  if (msg.includes("room") || msg.includes("404") || msg.includes("not found")) {
+  if (
+    msg.includes("room") ||
+    msg.includes("404") ||
+    msg.includes("not found")
+  ) {
     return "room";
   }
 
   return "unknown";
 }
 
-const ERROR_MESSAGES: Record<ErrorCategory, { title: string; description: string }> = {
+const ERROR_MESSAGES: Record<
+  ErrorCategory,
+  { title: string; description: string }
+> = {
   websocket: {
     title: "Connection Lost",
     description:
@@ -75,7 +82,10 @@ interface ErrorBoundaryState {
 
 // ── Component ──────────────────────────────────────────────────────
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null, category: "unknown" };
@@ -148,7 +158,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           {/* Text */}
           <div className="space-y-2">
             <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-            <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {description}
+            </p>
           </div>
 
           {/* Actions */}
