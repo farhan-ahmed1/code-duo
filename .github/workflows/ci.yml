@@ -79,7 +79,7 @@ jobs:
         run: pnpm build
 
       - name: Run unit tests with coverage
-        run: pnpm test:unit --coverage
+        run: pnpm test:unit -- --coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
