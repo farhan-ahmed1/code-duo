@@ -38,17 +38,21 @@ export function useYjs(roomId: string) {
     // Remote WebSocket sync — connects to ws://host/yjs/<roomId>
     // Reconnection uses exponential backoff configured in shared constants.
     const wsProvider = new WebsocketProvider(WS_URL, roomId, doc, {
+      connect: true,
       maxBackoffTime: WS_RECONNECT_CONFIG.maxBackoffTime,
-    });
-
-    wsProvider.on("status", ({ status }: { status: string }) => {
-      setIsConnected(status === "connected");
+      resyncInterval: 5000, // Resync every 5s if connection is stable
     });
 
     // Set state so consumers re-render and pick up live instances
     setYdoc(doc);
     setProvider(wsProvider);
     setYtext(text);
+
+    // Log connection status changes for debugging
+    wsProvider.on("status", ({ status }: { status: string }) => {
+      setIsConnected(status === "connected");
+      // console.debug(`[Yjs:${roomId}] Connection status: ${status}`);
+    });
 
     return () => {
       indexeddb.destroy();
