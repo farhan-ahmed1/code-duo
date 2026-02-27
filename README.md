@@ -99,6 +99,58 @@ A keystroke in Browser A is converted by `y-monaco` into a Yjs update — a bina
 
 ---
 
+## Testing
+
+```bash
+# Unit tests (all packages)
+pnpm test:unit
+
+# E2E tests (Chromium — starts dev servers automatically)
+pnpm test:e2e
+
+# Cross-browser E2E (Chromium + Firefox + WebKit)
+pnpm test:e2e:cross-browser
+
+# Stress tests (5+ concurrent users, network interruptions)
+pnpm test:e2e:stress
+
+# Performance benchmarks (edit latency & document load time)
+pnpm test:e2e:benchmark
+```
+
+---
+
+## Deploy
+
+### Backend → Railway
+
+The repo includes a `railway.toml` that builds from the server Dockerfile. Create a new Railway project, link the repo, and set these environment variables:
+
+| Variable   | Value        |
+| ---------- | ------------ |
+| `PORT`     | `4000`       |
+| `DATA_DIR` | `/app/data`  |
+| `NODE_ENV` | `production` |
+
+Railway provisions a persistent volume automatically when `DATA_DIR` is used. The health check at `/api/health` verifies the deploy.
+
+### Frontend → Vercel
+
+Import the repo into Vercel. The `vercel.json` in the root configures the build. Set these environment variables in the Vercel dashboard:
+
+| Variable              | Value                           |
+| --------------------- | ------------------------------- |
+| `NEXT_PUBLIC_WS_URL`  | `wss://<your-railway-domain>`   |
+| `NEXT_PUBLIC_API_URL` | `https://<your-railway-domain>` |
+
+After deploying both, verify:
+
+1. Open your Vercel URL → create a room
+2. Copy the room link → open in a second device/browser
+3. Type in one tab → edits appear in the other
+
+---
+
 ## Docs
 
 - [Architecture](docs/architecture.md) — data flow, concurrency model, persistence, scaling considerations, and technology decisions

@@ -186,10 +186,30 @@ async function measureLatencySamples(
     // Type marker on sender
     await typeMarker(sender, marker);
 
-    // Poll receiver until the marker appears (max 5 s)
-    await expect(receiver.locator(".monaco-editor")).toContainText(marker, {
-      timeout: 5_000,
-    });
+    // Poll receiver's Monaco *model* value (not the DOM — Monaco uses
+    // virtual rendering so the DOM only contains visible lines, which is
+    // the root cause of the flaky "toContainText" failures when the marker
+    // is scrolled out of the viewport).
+    await receiver.waitForFunction(
+      (m: string) => {
+        type TestWindow = {
+          __codeDuoGetEditorValue?: () => string;
+          monaco?: {
+            editor?: {
+              getModels?: () => Array<{ getValue(): string }>;
+            };
+          };
+        };
+        const w = window as unknown as TestWindow;
+        const val =
+          typeof w.__codeDuoGetEditorValue === "function"
+            ? w.__codeDuoGetEditorValue()
+            : (w.monaco?.editor?.getModels?.()?.[0]?.getValue() ?? "");
+        return val.includes(m);
+      },
+      marker,
+      { timeout: 10_000 },
+    );
 
     results.push(Date.now() - t0);
 
