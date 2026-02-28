@@ -54,18 +54,19 @@ export default defineConfig({
     {
       name: "firefox",
       use: { ...devices["Desktop Firefox"] },
-      testIgnore: /performance-benchmark\.spec\.ts/,
+      testIgnore: [/performance-benchmark\.spec\.ts/, /stress-test\.spec\.ts/],
     },
     {
       name: "webkit",
       use: { ...devices["Desktop Safari"] },
-      testIgnore: /performance-benchmark\.spec\.ts/,
+      testIgnore: [/performance-benchmark\.spec\.ts/, /stress-test\.spec\.ts/],
     },
 
     // ── Stress / performance tests – Chromium only (resource-intensive) ───
     {
       name: "stress",
       testMatch: /stress-test\.spec\.ts/,
+      timeout: 120_000,
       use: { ...devices["Desktop Chrome"] },
     },
     {

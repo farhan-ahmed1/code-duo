@@ -183,10 +183,10 @@ test.describe("Stress: 5 concurrent users", () => {
       for (let b = 0; b < BURSTS; b++) {
         for (let i = 0; i < USER_COUNT; i++) {
           await typeInEditor(pages[i], `U${i}B${b} `);
-          await pages[i].waitForTimeout(400);
+          await pages[i].waitForTimeout(200);
         }
         // Allow CRDT ops from this round to propagate before next round
-        await pages[0].waitForTimeout(3_000);
+        await pages[0].waitForTimeout(1_500);
       }
 
       const CONVERGENCE_TIMEOUT = 30_000;
