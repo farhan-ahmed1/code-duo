@@ -129,7 +129,7 @@ jobs:
         run: pnpm build
 
       - name: Install Playwright browsers
-        run: pnpm --filter @code-duo/web exec playwright install --with-deps chromium
+        run: pnpm --filter @code-duo/web exec playwright install --with-deps chromium firefox webkit
 
       - name: Run E2E tests
         run: pnpm test:e2e
