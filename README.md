@@ -142,6 +142,10 @@ Required GitHub environment secrets:
 - `VERCEL_ORG_ID`
 - `VERCEL_PROJECT_ID`
 
+Optional GitHub environment secrets:
+
+- `VERCEL_AUTOMATION_BYPASS_SECRET` if Vercel Deployment Protection is enabled. The deploy workflow uses it for the root probe and deployed Playwright smoke test.
+
 Required GitHub environment variables:
 
 - `RAILWAY_SERVICE`

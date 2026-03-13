@@ -15,6 +15,8 @@ import { defineConfig, devices } from "@playwright/test";
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const USE_MANAGED_WEB_SERVER =
   !process.env.SKIP_PLAYWRIGHT_WEBSERVER && BASE_URL.includes("localhost");
+const VERCEL_AUTOMATION_BYPASS_SECRET =
+  process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -38,6 +40,12 @@ export default defineConfig({
   /* Shared settings for all projects */
   use: {
     baseURL: BASE_URL,
+    extraHTTPHeaders: VERCEL_AUTOMATION_BYPASS_SECRET
+      ? {
+          "x-vercel-protection-bypass": VERCEL_AUTOMATION_BYPASS_SECRET,
+          "x-vercel-set-bypass-cookie": "true",
+        }
+      : undefined,
     /* Capture trace on first retry for debugging */
     trace: "on-first-retry",
     /* Record video for failed tests */
