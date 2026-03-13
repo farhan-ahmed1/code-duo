@@ -51,20 +51,37 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      testIgnore: /performance-benchmark\.spec\.ts/,
+      testIgnore: [
+        /performance-benchmark\.spec\.ts/,
+        /stress-test\.spec\.ts/,
+        /deployed-smoke\.spec\.ts/,
+      ],
     },
     {
       name: "firefox",
       use: { ...devices["Desktop Firefox"] },
-      testIgnore: [/performance-benchmark\.spec\.ts/, /stress-test\.spec\.ts/],
+      testIgnore: [
+        /performance-benchmark\.spec\.ts/,
+        /stress-test\.spec\.ts/,
+        /deployed-smoke\.spec\.ts/,
+      ],
     },
     {
       name: "webkit",
       use: { ...devices["Desktop Safari"] },
-      testIgnore: [/performance-benchmark\.spec\.ts/, /stress-test\.spec\.ts/],
+      testIgnore: [
+        /performance-benchmark\.spec\.ts/,
+        /stress-test\.spec\.ts/,
+        /deployed-smoke\.spec\.ts/,
+      ],
     },
 
-    // ── Stress / performance tests – Chromium only (resource-intensive) ───
+    // ── Opt-in test projects ───────────────────────────────────────────────
+    {
+      name: "deployed",
+      testMatch: /deployed-smoke\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
     {
       name: "stress",
       testMatch: /stress-test\.spec\.ts/,

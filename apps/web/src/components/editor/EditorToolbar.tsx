@@ -65,6 +65,7 @@ export default function EditorToolbar({
       <div className="ml-auto flex items-center gap-2 sm:gap-3">
         {/* Theme toggle */}
         <button
+          type="button"
           aria-label={`Switch to ${theme === "vs-dark" ? "light" : "dark"} theme`}
           onClick={onThemeToggle}
           className="rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

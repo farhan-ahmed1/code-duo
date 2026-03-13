@@ -29,6 +29,7 @@ export default function PresenceBar({
   const [nameInput, setNameInput] = useState("");
 
   const totalCount = (localUser ? 1 : 0) + remoteUsers.length;
+  const panelId = "presence-sidebar-panel";
 
   function handleNamePromptSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,9 +50,12 @@ export default function PresenceBar({
         aria-hidden={isOpen}
       >
         <button
+          type="button"
           onClick={onToggle}
           className="flex flex-col items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           aria-label="Expand presence sidebar"
+          aria-controls={panelId}
+          aria-expanded={isOpen}
         >
           <PanelRightOpen className="h-4 w-4" />
           <div className="flex flex-col items-center gap-1">
@@ -62,6 +66,7 @@ export default function PresenceBar({
       </div>
 
       <div
+        id={panelId}
         className={cn(
           "absolute inset-0 flex flex-col transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
           isOpen ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-3 opacity-0",
@@ -77,9 +82,12 @@ export default function PresenceBar({
           </div>
           {isCollapsible ? (
             <button
+              type="button"
               onClick={onToggle}
               className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               aria-label="Collapse presence sidebar"
+              aria-controls={panelId}
+              aria-expanded={isOpen}
             >
               <PanelRightClose className="h-4 w-4" />
             </button>
@@ -98,6 +106,7 @@ export default function PresenceBar({
                 onChange={(e) => setNameInput(e.target.value)}
                 placeholder={localUser?.name ?? "Your name"}
                 maxLength={20}
+                aria-label="Set your display name"
                 className="min-w-0 flex-1 rounded-md border border-border bg-secondary px-2 py-1 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
                 autoFocus
               />
@@ -108,6 +117,7 @@ export default function PresenceBar({
                   "transition-opacity hover:opacity-90 disabled:opacity-40",
                 )}
                 disabled={!nameInput.trim()}
+                aria-label="Save display name"
               >
                 Set
               </button>

@@ -105,16 +105,16 @@ A keystroke in Browser A is converted by `y-monaco` into a Yjs update — a bina
 # Unit tests (all packages)
 pnpm test:unit
 
-# E2E tests (Chromium — starts dev servers automatically)
+# Default E2E regression suite (Chromium + Firefox + WebKit)
 pnpm test:e2e
 
-# Cross-browser E2E (Chromium + Firefox + WebKit)
+# Cross-browser E2E (same suite, scoped directly to the web app)
 pnpm test:e2e:cross-browser
 
-# Stress tests (5+ concurrent users, network interruptions)
+# Stress tests (5+ concurrent users, network interruptions; opt-in)
 pnpm test:e2e:stress
 
-# Performance benchmarks (edit latency & document load time)
+# Performance benchmarks (edit latency & document load time; opt-in)
 pnpm test:e2e:benchmark
 ```
 

@@ -42,13 +42,15 @@ export default function ShareLinkButton({ roomId }: ShareLinkButtonProps) {
         aria-label="Room share URL"
       />
       <TooltipProvider delayDuration={0}>
-        <Tooltip open={copied ? true : undefined}>
+        <Tooltip open={copied}>
           <TooltipTrigger asChild>
             <Button
+              type="button"
               onClick={handleCopy}
               variant="secondary"
               size="sm"
               className="shrink-0 gap-1.5"
+              aria-label={copied ? "Room link copied" : "Copy room link"}
             >
               {copied ? (
                 <>
@@ -94,6 +96,9 @@ export default function ShareLinkButton({ roomId }: ShareLinkButtonProps) {
           )}
         </Tooltip>
       </TooltipProvider>
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {copied ? "Room link copied to clipboard" : ""}
+      </span>
     </div>
   );
 }

@@ -42,9 +42,9 @@ export default function ConnectionStatusIndicator({
     <TooltipProvider delayDuration={200}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className="flex cursor-help items-center gap-1.5 text-xs text-muted-foreground"
-            role="status"
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded-md px-1 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={`Connection status: ${label}`}
           >
             <span
@@ -53,7 +53,7 @@ export default function ConnectionStatusIndicator({
             />
             <span className="hidden md:inline">{label}</span>
             <HelpCircle className="h-3 w-3 opacity-50" aria-hidden="true" />
-          </div>
+          </button>
         </TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={8} className="max-w-[17rem]">
           <p className="font-medium">

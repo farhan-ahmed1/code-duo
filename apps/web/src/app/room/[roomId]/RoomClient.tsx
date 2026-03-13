@@ -178,6 +178,7 @@ export default function RoomClient({ roomId }: RoomClientProps) {
         <div
           className={`absolute inset-0 z-10 bg-black/40 transition-opacity duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isCompactLayout && sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
           onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
         />
         <div
           className={
@@ -198,9 +199,12 @@ export default function RoomClient({ roomId }: RoomClientProps) {
         {/* Floating mobile toggle when sidebar is hidden */}
         {isCompactLayout && !sidebarOpen && (
           <button
+            type="button"
             onClick={() => setSidebarOpen(true)}
             className="absolute bottom-4 right-4 z-10 flex items-center gap-1.5 rounded-full border border-border bg-surface-elevated px-3 py-2 text-xs font-medium text-foreground shadow-panel transition-all hover:bg-accent active:scale-95"
             aria-label="Show presence bar"
+            aria-controls="presence-sidebar-panel"
+            aria-expanded={sidebarOpen}
           >
             <Users className="h-3.5 w-3.5" />
             <span>{isMobile ? connectedUsers : `Presence ${connectedUsers}`}</span>
