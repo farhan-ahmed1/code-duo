@@ -76,13 +76,17 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           test -n "$RAILWAY_TOKEN" || { echo "Missing RAILWAY_TOKEN secret"; exit 1; }
+          test -n "${{ vars.RAILWAY_SERVICE }}" || { echo "Missing RAILWAY_SERVICE variable"; exit 1; }
           test -n "${{ vars.RAILWAY_PUBLIC_URL }}" || { echo "Missing RAILWAY_PUBLIC_URL variable"; exit 1; }
 
       - name: Deploy server
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway up --detach
+          railway up \
+            --service "${{ vars.RAILWAY_SERVICE }}" \
+            --environment "${{ needs.resolve_target.outputs.environment }}" \
+            --detach
 
       - name: Wait for Railway health check
         run: |
