@@ -3,6 +3,26 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Analytics } from "@vercel/analytics/next";
 
+function getMetadataBase(): URL {
+  const configuredBaseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const vercelDeploymentUrl = process.env.VERCEL_URL;
+
+  const rawBaseUrl =
+    configuredBaseUrl ??
+    vercelProductionUrl ??
+    vercelDeploymentUrl ??
+    (process.env.NODE_ENV === "production"
+      ? "https://codeduo.dev"
+      : "http://localhost:3000");
+
+  return new URL(
+    rawBaseUrl.startsWith("http://") || rawBaseUrl.startsWith("https://")
+      ? rawBaseUrl
+      : `https://${rawBaseUrl}`,
+  );
+}
+
 export const metadata: Metadata = {
   title: {
     default: "Code Duo — Code together, conflict-free",
@@ -25,9 +45,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Code Duo" }],
   creator: "Code Duo",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000",
-  ),
+  metadataBase: getMetadataBase(),
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

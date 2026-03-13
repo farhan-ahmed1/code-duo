@@ -168,10 +168,13 @@ The backend uses `railway.toml` plus the server Dockerfile. Configure these valu
 
 Configure these environment variables in Vercel:
 
-| Variable              | Value                           |
-| --------------------- | ------------------------------- |
-| `NEXT_PUBLIC_WS_URL`  | `wss://<your-railway-domain>`   |
-| `NEXT_PUBLIC_API_URL` | `https://<your-railway-domain>` |
+| Variable               | Value                            |
+| ---------------------- | -------------------------------- |
+| `NEXT_PUBLIC_BASE_URL` | `https://<your-frontend-domain>` |
+| `NEXT_PUBLIC_WS_URL`   | `wss://<your-railway-domain>`    |
+| `NEXT_PUBLIC_API_URL`  | `https://<your-railway-domain>`  |
+
+`NEXT_PUBLIC_BASE_URL` keeps Open Graph and Twitter metadata pinned to the real deployed frontend origin. On Vercel, the app also falls back to the platform deployment URL automatically, but setting it explicitly avoids localhost metadata leaks on non-standard builds.
 
 ## Architecture At A Glance
 

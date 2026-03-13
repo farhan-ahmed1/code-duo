@@ -40,12 +40,12 @@ async function waitForEditor(page: Page) {
   await page.waitForTimeout(500);
 }
 
-/** Focus Monaco and insert text atomically.
+/** Focus Monaco and insert text.
  *
- *  Uses `keyboard.insertText()` rather than `keyboard.type()` so the entire
- *  string is delivered as a single InputEvent.  This is reliable across all
- *  browsers (WebKit in particular drops individual key events sent to Monaco
- *  under load).
+ *  Tries `keyboard.insertText()` first (atomic, reliable in WebKit).
+ *  If the text doesn't appear in the editor within 1 s — which happens on
+ *  Firefox where `insertText` can be silently swallowed by Monaco — falls
+ *  back to `keyboard.type()` with a small inter-key delay.
  */
 async function typeInEditor(page: Page, text: string) {
   await page.click(".monaco-editor .view-lines");
@@ -53,6 +53,36 @@ async function typeInEditor(page: Page, text: string) {
   await page.keyboard.press("End"); // move to end of line
   await page.keyboard.insertText(text);
   await page.keyboard.press("Escape"); // dismiss autocomplete
+
+  // Self-check: verify text actually reached the Monaco model.
+  // On Firefox, insertText can be swallowed — fall back to type().
+  const landed = await page
+    .waitForFunction(
+      (expected: string) => {
+        const w = window as unknown as {
+          __codeDuoGetEditorValue?: () => string;
+          monaco?: { editor?: { getModels?: () => Array<{ getValue(): string }> } };
+        };
+        const val =
+          w.__codeDuoGetEditorValue?.() ??
+          w.monaco?.editor?.getModels?.()?.[0]?.getValue() ??
+          "";
+        return val.includes(expected);
+      },
+      text,
+      { timeout: 1_500 },
+    )
+    .then(() => true)
+    .catch(() => false);
+
+  if (!landed) {
+    // Clear any partial state and retry with keyboard.type()
+    await page.click(".monaco-editor .view-lines");
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("End");
+    await page.keyboard.type(text, { delay: 20 });
+    await page.keyboard.press("Escape");
+  }
 }
 
 /** Return the full plain-text content currently visible in Monaco.
@@ -494,6 +524,11 @@ test.describe("Real-time collaboration", () => {
     await waitForEditor(page);
 
     await typeInEditor(page, "persistent content here");
+
+    // Confirm the text is in the local editor before proceeding
+    await expect
+      .poll(() => getEditorText(page), { timeout: 5_000 })
+      .toContain("persistent content here");
 
     // Wait for debounced server-side save
     await page.waitForTimeout(3_000);
