@@ -1,7 +1,16 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "apps/server/Dockerfile"
-watchPatterns = ["apps/server/**", "packages/shared/**"]
+watchPatterns = [
+	"apps/server/**",
+	"packages/shared/**",
+	"package.json",
+	"pnpm-lock.yaml",
+	"pnpm-workspace.yaml",
+	"turbo.json",
+	"tsconfig.json",
+	"railway.toml",
+]
 
 [deploy]
 healthcheckPath = "/api/health"
