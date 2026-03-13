@@ -154,6 +154,7 @@ After deploying both, verify:
 ## Docs
 
 - [Architecture](docs/architecture.md) — data flow, concurrency model, persistence, scaling considerations, and technology decisions
+- [Architecture Decision Records](docs/adrs/README.md) — formal decisions with context, alternatives, rationale, and accepted trade-offs
 - [CRDT Explainer](docs/crdt-explainer.md) — how Yjs works internally, CRDTs vs. OT, and common interview questions
 - [API Reference](docs/api.md) — REST endpoints, WebSocket protocol, and error codes
 

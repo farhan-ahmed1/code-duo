@@ -1,284 +1,300 @@
-# Architecture
+# System Design
 
-## Overview
+## Delivery Status
 
-Code Duo is a real-time collaborative code editor. Two people open the same room URL and their keystrokes appear on each other's screens within milliseconds — no refresh, no conflicts, no data loss if the network drops. This document explains how that works end-to-end.
+- ✅ Formal ADR set completed in [docs/adrs](./adrs/README.md)
+- ✅ C4 model documented at context, container, and component levels
+- ✅ End-to-end keystroke to screen flow documented
+- ✅ Scaling analysis added for MVP, 1K rooms, and 10K rooms
+- ✅ Failure modes documented for server crash, network partition, and browser crash
+- ✅ Trade-off analysis added for transport, persistence, and rendering strategy
 
-The system has three major layers:
+## Scope
 
-1. **Frontend** — Next.js + Monaco Editor, with Yjs running entirely in the browser.
-2. **Backend** — a single Node.js process that relays Yjs updates over WebSocket and persists document state to SQLite.
-3. **Persistence** — two tiers: SQLite on the server for durability, IndexedDB in the browser for offline speed.
+Code Duo is a real-time collaborative code editor built around CRDT synchronization. The current implementation uses a Next.js web app, Monaco Editor, Yjs, `y-websocket`, a Hono-based API server, and SQLite via `better-sqlite3`.
+
+Primary constraints:
+
+- Collaborative text must converge without server-side conflict resolution.
+- The editor must remain usable during temporary disconnection.
+- MVP scale target is 10+ concurrent users per room and 100+ rooms.
+- Persistence must store room metadata and recover document state after process restart.
+
+## ADR Map
+
+- [ADR-001](./adrs/ADR-001-crdts-over-ot.md) — CRDTs over OT
+- [ADR-002](./adrs/ADR-002-yjs-over-automerge.md) — Yjs over Automerge
+- [ADR-003](./adrs/ADR-003-monaco-over-codemirror.md) — Monaco over CodeMirror
+- [ADR-004](./adrs/ADR-004-sqlite-over-postgresql-for-mvp.md) — SQLite over PostgreSQL for MVP
+- [ADR-005](./adrs/ADR-005-hono-over-express-fastify.md) — Hono over Express and Fastify
+- [ADR-006](./adrs/ADR-006-monorepo-with-pnpm-and-turborepo.md) — pnpm + Turborepo monorepo
+- [ADR-007](./adrs/ADR-007-ephemeral-awareness-protocol.md) — Ephemeral awareness protocol
+
+## C4 Model
+
+### Level 1: System Context
 
 ```mermaid
 graph TD
-    subgraph Browser A
-        MA[Monaco Editor] <-->|y-monaco binding| YA[Yjs Y.Doc]
-        YA <-->|y-indexeddb| IDB_A[(IndexedDB)]
-        YA <-->|y-websocket| WSA
-    end
+    UserA[Developer A]
+    UserB[Developer B]
+    CodeDuo[Code Duo Collaboration System]
+    Storage[(SQLite Persistence)]
 
-    subgraph Browser B
-        MB[Monaco Editor] <-->|y-monaco binding| YB[Yjs Y.Doc]
-        YB <-->|y-indexeddb| IDB_B[(IndexedDB)]
-        YB <-->|y-websocket| WSB
-    end
-
-    subgraph Server [Node.js Server]
-        WSA[WebSocket /yjs/:roomId] --> Relay[y-websocket relay]
-        WSB[WebSocket /yjs/:roomId] --> Relay
-        Relay <--> YS[Server Y.Doc]
-        YS <-->|bindState / writeState| DS[(SQLite documents)]
-        API[Hono HTTP API] <--> RS[(SQLite rooms)]
-    end
-
-    Browser_A_HTTP[Browser: POST /api/rooms] --> API
+    UserA -->|Open room, edit code, see presence| CodeDuo
+    UserB -->|Open room, edit code, see presence| CodeDuo
+    CodeDuo -->|Persist rooms and document snapshots| Storage
 ```
 
-## Components
+System responsibilities:
 
-### Frontend (`apps/web`)
+- Accept room creation and room lookup requests.
+- Synchronize shared Yjs document updates across connected browsers.
+- Provide transient awareness for presence and cursor identity.
+- Persist room metadata and serialized Yjs state for recovery.
 
-Built with **Next.js 14** (App Router) and **React 18**.
+### Level 2: Container View
 
-| Component                  | Role                                                                                                                       |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `CollaborativeEditor`      | Mounts Monaco; creates the `MonacoBinding` between Monaco and Yjs                                                          |
-| `y-websocket` provider     | Opens a WebSocket to the server and syncs the `Y.Doc`                                                                      |
-| `y-indexeddb` provider     | Mirrors the `Y.Doc` in the browser's IndexedDB for offline support                                                         |
-| `useYjs` hook              | Initialises the `Y.Doc`, both providers, and exposes the shared `Y.Text` and `Y.Map`                                       |
-| `useConnectionStatus` hook | Subscribes to `WebsocketProvider` events and exposes `connected / connecting / disconnected` plus `synced / syncing` state |
-| `useAwareness` hook        | Reads the awareness state from the `WebsocketProvider` to drive the presence bar                                           |
-| `PresenceBar`              | Renders a live list of connected users with their colors and cursor names                                                  |
-| `EditorToolbar`            | Language picker (synced via a shared `Y.Map`), theme toggle, connection status indicator                                   |
+```mermaid
+graph TD
+    subgraph Browser[User Browser]
+        NextApp[Next.js Web App]
+        Monaco[Monaco Editor]
+        YDoc[Yjs Y.Doc]
+        Awareness[Awareness State]
+        IndexedDB[(IndexedDB)]
+        NextApp --> Monaco
+        Monaco <--> YDoc
+        YDoc <--> Awareness
+        YDoc <--> IndexedDB
+    end
 
-The text content lives in a `Y.Text` instance keyed as `"monaco"`. Room settings (language, theme) live in a `Y.Map` keyed as `"settings"`. Both are properties of the same `Y.Doc`, so they sync through the same WebSocket connection.
+    subgraph Server[Node.js Server]
+        Api[Hono HTTP API]
+        Relay[y-websocket Relay]
+        Persistence[Persistence Layer]
+        Api --> Persistence
+        Relay --> Persistence
+    end
 
-### Backend (`apps/server`)
+    SQLite[(SQLite)]
 
-A single **Node.js** HTTP server that handles both the REST API and WebSocket connections.
-
-```bash
-index.ts          — binds HTTP server, attaches WebSocket upgrade handler
-api/
-  routes.ts       — Hono router: POST /api/rooms, GET /api/rooms, health, metrics
-  middleware.ts   — CORS, request logger, Prometheus histogram, error handler
-  rate-limiter.ts — in-memory sliding-window rate limiter
-  validation.ts   — input sanitisation, body-size limit
-ws-server.ts      — y-websocket relay, persistence hooks, metrics instrumentation
-jobs/
-  room-cleanup.ts — background job: delete rooms idle for 7+ days
-persistence/
-  room-store.ts   — SQLite CRUD for room metadata
-  document-store.ts — SQLite save/load for Yjs binary state
-utils/
-  metrics.ts      — prom-client gauges, counters, histograms
-  logger.ts       — Pino structured logger
-  id.ts           — nanoid-based room ID generator
+    NextApp -->|POST/GET room APIs| Api
+    YDoc -->|Yjs binary updates over WebSocket| Relay
+    Awareness -->|Ephemeral awareness messages| Relay
+    Persistence --> SQLite
 ```
 
-The Hono app and the `WebSocketServer` (from the `ws` package) share the same underlying Node.js `http.Server`. HTTP requests go to Hono; WebSocket upgrade requests for paths starting with `/yjs/` are handed off to `ws`.
+Container responsibilities:
 
-### Persistence (`SQLite via better-sqlite3`)
+| Container | Responsibility |
+| --- | --- |
+| Next.js web app | Routes users, renders room shell, creates collaborative editor session |
+| Monaco Editor | Local editing surface, language modes, cursor model |
+| Yjs document | Shared text state, merge semantics, update encoding |
+| IndexedDB | Local cache for offline-first recovery and warm reloads |
+| Hono API | Room CRUD, health endpoints, metrics exposure, middleware |
+| y-websocket relay | Fan-out for Yjs updates and awareness payloads |
+| SQLite persistence | Durable room metadata and encoded document snapshots |
 
-Two tables:
+### Level 3: Component View
 
-```sql
--- Room metadata
-CREATE TABLE rooms (
-  id          TEXT PRIMARY KEY,   -- URL-safe nanoid, 8 chars
-  name        TEXT NOT NULL,
-  language    TEXT NOT NULL DEFAULT 'typescript',
-  created_at  TEXT NOT NULL,
-  updated_at  TEXT NOT NULL,
-  accessed_at TEXT NOT NULL       -- updated on every WS connection
-);
+```mermaid
+graph TD
+    subgraph Web[apps/web]
+        RoomPage[Room Route]
+        RoomClient[RoomClient]
+        Editor[CollaborativeEditor]
+        UseYjs[useYjs Hook]
+        PresenceBar[PresenceBar]
+        Toolbar[EditorToolbar]
+        IndexedDbProvider[y-indexeddb Provider]
+        WsProvider[y-websocket Provider]
 
--- Yjs document state (binary)
-CREATE TABLE documents (
-  room_id    TEXT PRIMARY KEY,
-  state      BLOB NOT NULL,       -- Y.encodeStateAsUpdate output
-  updated_at TEXT NOT NULL
-);
+        RoomPage --> RoomClient
+        RoomClient --> Editor
+        RoomClient --> PresenceBar
+        RoomClient --> Toolbar
+        Editor --> UseYjs
+        UseYjs --> IndexedDbProvider
+        UseYjs --> WsProvider
+    end
+
+    subgraph Backend[apps/server]
+        Index[index.ts]
+        Routes[api/routes.ts]
+        Middleware[api/middleware.ts]
+        WsServer[ws-server.ts]
+        RoomStore[room-store.ts]
+        DocumentStore[document-store.ts]
+        Cleanup[room-cleanup.ts]
+        Metrics[utils/metrics.ts]
+
+        Index --> Routes
+        Index --> Middleware
+        Index --> WsServer
+        Routes --> RoomStore
+        WsServer --> RoomStore
+        WsServer --> DocumentStore
+        WsServer --> Metrics
+        Cleanup --> RoomStore
+        Cleanup --> DocumentStore
+    end
 ```
 
-Both databases run in **WAL mode** (`PRAGMA journal_mode = WAL`) so reads do not block writes.
+Key component boundaries:
+
+- `useYjs` owns shared document initialization, provider wiring, and offline cache bootstrap.
+- `CollaborativeEditor` binds Monaco to the shared `Y.Text` instance.
+- `ws-server.ts` owns connection lifecycle, room connection counts, persistence hooks, and message instrumentation.
+- `room-store.ts` and `document-store.ts` isolate SQLite access so persistence decisions remain swappable.
 
 ## Data Flow: Keystroke to Screen
 
-Here is exactly what happens when a user types a character:
+This is the complete path from a local keystroke to remote screen convergence.
+
+1. A user types in Monaco inside the browser.
+2. The Monaco binding converts the local model delta into a mutation on a shared `Y.Text`.
+3. Yjs emits a binary update representing the operation with client-specific causal metadata.
+4. The `y-websocket` provider sends that binary update to the room WebSocket endpoint.
+5. The server relay applies the update to the room's in-memory `Y.Doc` and broadcasts it to the other connected clients for that room.
+6. Each receiving client applies the update to its own local `Y.Doc`.
+7. The local Monaco binding observes the Yjs change and patches the remote editor model.
+8. Presence state updates separately through the awareness channel so cursor and participant UI remain live.
+9. On a debounce window, the server serializes the current `Y.Doc` with `Y.encodeStateAsUpdate` and stores it in SQLite.
+10. In parallel, each client persists updates into IndexedDB so reconnect and reload are fast even before the server sync completes.
 
 ```mermaid
 sequenceDiagram
-    participant MA as Monaco (Client A)
-    participant YA as Yjs Y.Doc (Client A)
-    participant WS as WebSocket Server
-    participant YB as Yjs Y.Doc (Client B)
-    participant MB as Monaco (Client B)
+    participant AEdit as Monaco A
+    participant AY as Yjs A
+    participant WS as WebSocket Relay
+    participant BY as Yjs B
+    participant BEdit as Monaco B
+    participant DB as SQLite
 
-    MA->>YA: 1. User types "x" — Monaco fires onChange
-    YA->>YA: 2. MonacoBinding converts delta to Y.Text insert
-    YA->>WS: 3. y-websocket sends binary update (clientID + clock)
-    WS->>WS: 4. y-websocket relay: applyUpdate to server Y.Doc
-    WS->>YB: 5. Relay broadcasts update to all other clients
-    YB->>YB: 6. Yjs applies update, resolves any concurrent edits via CRDT
-    YB->>MB: 7. MonacoBinding receives Y.Text "observe" event
-    MB->>MB: 8. Monaco applies delta to editor model
+    AEdit->>AY: Local text delta
+    AY->>WS: Binary Yjs update
+    WS->>WS: Apply update to server room doc
+    WS->>BY: Broadcast update
+    BY->>BEdit: Apply merged delta to editor model
+    WS-->>DB: Debounced snapshot save
 ```
 
-The whole path, on a local network, takes roughly 50–150 ms end-to-end (see [Performance Benchmarks](#performance-benchmarks)). Step 6 is where the CRDT does its work — if Client B also typed something at the same position while offline, Yjs merges both operations deterministically without asking the server. See [CRDT-EXPLAINER.md](crdt-explainer.md) for a deep dive on how that works.
+## Persistence and Offline Model
 
-## Concurrency Model
+Durable state and transient state are intentionally separated.
 
-Code Duo has **no server-side conflict resolution logic**. The server is a relay — it forwards binary Yjs updates between clients and keeps a copy of the latest document state. All conflict resolution happens inside the Yjs CRDT implementation running in each browser.
+| State type | Storage | Why |
+| --- | --- | --- |
+| Document content | SQLite and IndexedDB | Durable recovery plus fast local warm start |
+| Room metadata | SQLite | Needed for room lifecycle, API responses, and cleanup |
+| Awareness and cursors | Memory only | Ephemeral collaboration state should not survive reconnect |
 
-This is fundamentally different from services like Google Docs (which use Operational Transformation and require a central authority to impose operation order). With CRDTs:
+Design implications:
 
-- Each operation carries a globally unique identifier `(clientID, clock)`.
-- Operations are **idempotent**: applying the same update twice produces the same result.
-- Operations are **commutative**: `apply(A, B)` = `apply(B, A)` regardless of arrival order.
-- Operations are **associative**: merging in any grouping yields the same result.
+- The server is not a conflict resolver. It only relays and snapshots.
+- IndexedDB makes the editor locally responsive before the WebSocket handshake finishes.
+- SQLite is the durability boundary for MVP disaster recovery, not the primary collaboration engine.
 
-These three properties together mean clients can receive updates in any order, apply them to their local state, and always converge to the same document — with zero coordination from the server.
+## Scaling Analysis
 
-Concurrent inserts at the exact same position are resolved by a deterministic tiebreaker in **YATA** (Yjs's algorithm), based on the clientID values. The same tiebreaker runs identically on every client, so all clients agree on the final order.
+### MVP Envelope: 100 Rooms
 
-## Persistence Strategy
+Current architecture is appropriate for the validated MVP scope.
 
-Document state is saved in two places:
+- Single Node.js process handles API and WebSocket traffic.
+- SQLite in WAL mode supports the current write pattern of debounced document snapshots.
+- In-memory room connection tracking is operationally simple and matches single-instance deployment.
 
-### Server-side (SQLite)
+### At 1K Rooms
 
-The persistence lifecycle is managed by `y-websocket`'s `setPersistence` hooks:
+Primary bottlenecks shift from product correctness to resource coordination.
 
-| Hook                         | When it fires                   | What it does                                                                                 |
-| ---------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------- |
-| `bindState`                  | First client connects to a room | Loads the saved `BLOB` from `documents` table and calls `Y.applyUpdate` on the fresh `Y.Doc` |
-| `writeState` (final flush)   | Last client disconnects         | Encodes the full document state with `Y.encodeStateAsUpdate` and saves to SQLite immediately |
-| Incremental save (debounced) | Any `Y.Doc` `"update"` event    | Same as final flush but debounced to 2 seconds (`DOCUMENT_DEBOUNCE_MS`) to avoid thrashing   |
+| Concern | Current behavior | Change required |
+| --- | --- | --- |
+| WebSocket fan-out | One process handles all room broadcasts | Add horizontal relay scale with Redis-backed pub/sub or room sharding |
+| Room state memory | Hot rooms keep server-side Yjs docs in process memory | Add eviction policy and lazy reload strategy |
+| SQLite write pressure | Snapshot writes serialize through one file | Introduce write queue discipline or move persistence to PostgreSQL |
+| Rate limiting | Per-process counters only | Move rate limits to shared infrastructure such as Redis |
 
-The SQLite `BLOB` is the raw output of `Y.encodeStateAsUpdate` — a compact binary encoding of all operations in the document's history. Loading it back is a single `Y.applyUpdate` call; Yjs handles the rest.
+Recommended architecture delta at 1K rooms:
 
-### Client-side (IndexedDB)
+- Split HTTP and WebSocket responsibilities if relay traffic becomes dominant.
+- Introduce shared coordination for fan-out and rate limiting.
+- Keep document snapshots as snapshots, not append-only event history, to control recovery cost.
 
-`y-indexeddb` runs alongside `y-websocket` on the same `Y.Doc`. It persists every update to the browser's IndexedDB automatically. When a user returns to a room:
+### At 10K Rooms
 
-1. IndexedDB loads the local document state instantly (<5 ms typically) — Monaco becomes interactive before the WebSocket even connects.
-2. The WebSocket connects in the background and syncs any updates that arrived while the user was away.
-3. Yjs merges both states seamlessly.
+The MVP topology stops being the right shape.
 
-This gives the editor **offline-first** behaviour: users can keep editing with no connection and their changes sync when the network returns.
+| Concern | Why it breaks | New architecture direction |
+| --- | --- | --- |
+| Single-node relay | CPU and socket fan-out become operational risk | Multi-instance WebSocket tier with room partitioning |
+| Single SQLite file | No practical multi-node durability or failover story | PostgreSQL or object storage plus queue-backed snapshot workers |
+| Regional latency | One region hurts edit latency globally | Region-aware routing with colocated relay nodes |
+| Hot-room concentration | Large rooms can dominate one process | Consistent-hash room assignment and explicit load shedding |
 
-## Scaling Considerations
+Recommended architecture delta at 10K rooms:
 
-The current architecture is optimised for a single-server deployment. Here is what changes at each scale threshold:
+- Separate API, relay, and persistence concerns into independently scalable services.
+- Use shared pub/sub or CRDT-aware relay coordination across instances.
+- Introduce observability for per-room latency, memory usage, and reconnect churn before reaching this scale.
 
-### 100 rooms, ~200 concurrent users
+## Failure Modes
 
-The current design handles this comfortably. SQLite in WAL mode can sustain hundreds of reads per second. The in-memory rate limiter and connection tracking (`roomConnectionCounts` Map) stay small. No changes needed.
+| Failure mode | Expected behavior | User impact | Mitigation |
+| --- | --- | --- | --- |
+| Server crash | Active sockets drop; clients enter reconnect loop; unsaved server memory is lost | Recent unsnapshotted server state may be lost, but locally cached browser state remains | Debounced snapshots, IndexedDB recovery, process restart, health probes |
+| Network partition | Browser continues applying edits locally; provider retries connection | Remote collaborators stop seeing changes until partition heals | Yjs convergence on reconnect, connection status UI, offline cache |
+| Browser crash or tab close | Local session disappears; awareness state vanishes; unsent local updates may remain only in IndexedDB | Presence drops immediately; user may lose only edits not yet committed to local storage | IndexedDB persistence, reconnect bootstrap, awareness treated as ephemeral |
 
-### 1,000+ concurrent users
+Operational notes:
 
-The bottlenecks become:
+- Presence accuracy intentionally degrades before document correctness does.
+- The strongest recovery path is browser-local state plus later convergence, not server-central authority.
+- Alerting should distinguish API readiness, WebSocket accept rate, and snapshot failure rate.
 
-| Bottleneck              | Current design                                                                                          | Upgrade path                                                                                                     |
-| ----------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| WebSocket fan-out       | Single process, single event loop                                                                       | Horizontal scaling with Redis pub/sub (`y-redis` or a custom adapter) so updates fan out across server instances |
-| Rate limiter            | In-memory per-process counter — each instance tracks independently, an IP could exceed the global limit | Replace with a Redis-backed sliding-window counter                                                               |
-| SQLite write contention | Single writer; concurrent `writeState` calls serialise naturally via better-sqlite3's synchronous API   | Migrate to PostgreSQL (or keep SQLite with a separate write queue) for true concurrent writes                    |
-| Document load time      | Full document loaded into memory per room on first connection                                           | Add a TTL-based in-memory cache so hot rooms don't hit SQLite on every reconnect                                 |
+## Trade-off Analysis
 
-### 10,000+ concurrent users / global deployment
+### WebSocket vs WebRTC vs SSE
 
-At this scale the architecture needs to be rethought:
+| Option | Strengths | Weaknesses | Fit for Code Duo |
+| --- | --- | --- | --- |
+| WebSocket | Full-duplex, widely supported, natural fit for room relay model | Requires stateful connection infrastructure | ✅ Best MVP fit |
+| WebRTC | Peer-to-peer potential, lower server relay cost in some topologies | NAT traversal complexity, harder room coordination, weaker operational predictability | Better for later experiments than MVP default |
+| SSE | Simpler server push for one-way streams | No client-to-server duplex channel, poor fit for collaborative editing | Not suitable |
 
-- **Multi-region**: Deploy server instances in multiple regions. Use `y-redis` as the shared state layer so clients connect to the nearest server instance.
-- **Document sharding**: Route rooms to specific server instances by consistent hashing on the room ID.
-- **Object storage**: Move the Yjs state `BLOB` from SQLite to object storage (S3/R2) — cheaper, more durable, no write contention.
-- **Separate WebSocket tier**: Decouple the WebSocket relay from the REST API into separate services that scale independently.
+Decision:
 
-## Technology Decisions
+Use WebSocket for collaborative transport because Code Duo needs bidirectional low-latency updates and awareness signaling. WebRTC is attractive only if relay cost dominates later, and SSE does not satisfy the duplex requirement.
 
-### Yjs over Automerge
+### SQLite vs PostgreSQL vs LevelDB
 
-Both are mature CRDT libraries for JavaScript, but Yjs was chosen because:
+| Option | Strengths | Weaknesses | Fit for Code Duo |
+| --- | --- | --- | --- |
+| SQLite | Minimal ops, fast local file access, enough for single-node MVP | Single-writer ceiling, weak multi-node story | ✅ Best MVP fit |
+| PostgreSQL | Concurrency, observability, HA options, easier multi-node future | More operational overhead than needed now | Best next step after MVP scale |
+| LevelDB | Fast embedded key-value storage | Poor fit for relational room metadata and operational introspection | Too low-level for current needs |
 
-- **Ecosystem**: `y-websocket`, `y-indexeddb`, `y-monaco`, and `y-webrtc` are all first-party packages with a consistent API surface. Automerge requires more custom glue code for the same set up.
-- **Performance**: Yjs uses a YATA-based linked-list structure that keeps encoding size small over time. Automerge 2.0 improved significantly, but Yjs still has lower overhead for the sequential-text use case of a code editor.
-- **Monaco integration**: `y-monaco` provides an out-of-the-box `MonacoBinding` that handles cursor sharing, undo manager scoping, and awareness state without custom code.
+Decision:
 
-### SQLite over PostgreSQL
+Use SQLite for MVP because the schema is small and deployment simplicity matters more than early distributed durability. PostgreSQL is the expected upgrade once relay scale or multi-instance persistence becomes necessary.
 
-- **Deployment simplicity**: SQLite is a file — no separate database process, no connection pooling, no credentials to manage. `docker compose up` starts the entire stack with a single volume mount.
-- **Performance at this scale**: A collaborative code editor with hundreds of rooms is read-heavy and write-bursty. SQLite in WAL mode handles this pattern well with no tuning.
-- **Sufficient durability**: WAL mode plus the Docker volume mount gives the same durability guarantees as a managed database for a single-server deployment.
-- **Upgrade path is clear**: If scale demands it, migrating from SQLite to PostgreSQL is a well-understood one-time migration since the schema is simple and `better-sqlite3`'s API maps closely to `pg`.
+### Server-Side Rendering vs Client-Only for Editor Page
 
-### Monaco over CodeMirror
+| Option | Strengths | Weaknesses | Fit for Code Duo |
+| --- | --- | --- | --- |
+| Full SSR editor page | Faster first paint for static shell, SEO-friendly surrounding page | Monaco and collaboration providers are browser-centric and need hydration workarounds | Useful for shell, not for editor core |
+| Client-only page | Simplifies browser-only editor code | Worse perceived loading and weaker metadata/SEO story | Too blunt for full app |
+| Hybrid SSR shell + client-only editor | SSR handles page frame and metadata; editor loads dynamically in browser | Requires explicit boundaries between server and client components | ✅ Best fit |
 
-- **Familiarity**: Monaco is the VS Code editor engine. Developers already know its shortcuts, multi-cursor behaviour, and language features.
-- **Language support**: Monaco ships with built-in tokenisers and language services for TypeScript, JavaScript, Python, Go, Rust, and more. CodeMirror 6 requires separate packages for each language.
-- **TypeScript integration**: Monaco has first-class TypeScript language service support (IntelliSense, diagnostics) built in. For a collaborative TypeScript editor this is a meaningful differentiator.
-- **Tradeoff accepted**: Monaco is larger (~2 MB gzipped vs ~200 KB for CodeMirror). The Next.js dynamic import with `ssr: false` mitigates this by code-splitting Monaco out of the initial bundle.
+Decision:
 
-## Known Limitations
+Use a hybrid model. Render the room shell through Next.js, but load Monaco and live collaboration logic on the client. This preserves route-level UX and metadata while respecting Monaco's browser-only runtime.
 
-- **No authentication**: Rooms are publicly accessible to anyone with the URL. Access control (read-only viewers, private rooms with invite codes) would require an auth layer.
-- **Document size growth**: Yjs documents grow over time because deleted content is kept as tombstones (YATA's delete strategy). For very long-lived documents with heavy editing, the state vector can become large. Yjs's garbage collection (`gc: true`) reclaims tombstones when safe to do so, but it is not instantaneous.
-- **Single-region latency**: All WebSocket traffic routes through one server. Users on opposite sides of the world see higher propagation latency. Multi-region deployment with `y-redis` would solve this.
-- **No version history**: The server stores one snapshot per room (the latest state). Point-in-time recovery requires periodic snapshot storage, which is not currently implemented.
-- **SQLite concurrency ceiling**: `better-sqlite3` serialises writes within a single process. Under very high write load (many large documents saving simultaneously), writes will queue. This is acceptable for the current scale.
+## Recommended Next Architectural Steps
 
-## Performance Benchmarks
-
-Benchmarks are captured by `apps/web/e2e/performance-benchmark.spec.ts` and can
-be reproduced by running:
-
-```bash
-pnpm test:e2e:benchmark
-```
-
-Results are written to `apps/web/e2e/benchmark-results.json` after each run.
-
-### Edit Propagation Latency (localhost)
-
-Time from a keystroke on Client A until the change is visible on Client B, with varying numbers of idle users in the same room.
-
-| Concurrent Users | p50 (ms) | p95 (ms) | max (ms) |
-| ---------------- | -------- | -------- | -------- |
-| 1                | 134      | 297      | 297      |
-| 3                | 231      | 342      | 342      |
-| 5                | 337      | 448      | 448      |
-| 10               | 726      | 1153     | 1153     |
-
-_All measurements taken on localhost (same machine as server). Production figures with a same-region server will be lower once network RTT replaces the Node.js loopback overhead._
-
-### Document Load Time
-
-Time from `page.goto(roomUrl)` until Monaco is interactive, across document sizes.
-
-| Document Size | p50 (ms) | p95 (ms) |
-| ------------- | -------- | -------- |
-| 1 KB          | 1209     | 1611     |
-| 100 KB        | 1134     | 1149     |
-| 1 MB          | 1085     | 1205     |
-
-The flat curve across document sizes reflects IndexedDB loading the local snapshot before the WebSocket sync completes — the initial render is not gated on document size.
-
-## Tech Stack Summary
-
-| Layer              | Technology                  | Version                    |
-| ------------------ | --------------------------- | -------------------------- |
-| Frontend framework | Next.js (App Router)        | 14                         |
-| UI components      | React                       | 18                         |
-| Code editor        | Monaco Editor               | via `@monaco-editor/react` |
-| CRDT library       | Yjs                         | latest                     |
-| WebSocket sync     | y-websocket                 | latest                     |
-| Offline sync       | y-indexeddb                 | latest                     |
-| Editor binding     | y-monaco                    | latest                     |
-| HTTP framework     | Hono                        | latest                     |
-| WebSocket server   | ws                          | latest                     |
-| Database           | SQLite via better-sqlite3   | latest                     |
-| Metrics            | prom-client                 | latest                     |
-| Logging            | Pino                        | latest                     |
-| Monorepo           | Turborepo + pnpm workspaces | latest                     |
+1. Add an ADR for multi-instance relay coordination before introducing Redis or room sharding.
+2. Define snapshot compaction and restore SLAs before moving beyond SQLite.
+3. Add room-level latency and reconnect metrics so scaling decisions are based on observed load rather than aggregate traffic alone.
