@@ -86,8 +86,7 @@ jobs:
           railway up \
             --service "${{ vars.RAILWAY_SERVICE }}" \
             --environment "${{ needs.resolve_target.outputs.environment }}" \
-            --detach \
-            --yes
+            --detach
 
       - name: Wait for Railway health check
         run: |
