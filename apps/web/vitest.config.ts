@@ -30,6 +30,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      "@": path.resolve(__dirname, "src"),
       "@/*": path.resolve(__dirname, "src"),
       "@code-duo/shared": path.resolve(
         __dirname,

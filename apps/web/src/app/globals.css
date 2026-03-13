@@ -7,6 +7,12 @@
     /* Zed-inspired deep dark theme — default */
     --background: 220 18% 7%;
     --foreground: 220 10% 92%;
+    --surface: 220 16% 9%;
+    --surface-elevated: 220 16% 11%;
+    --surface-muted: 220 14% 13%;
+    --editor-surface: 220 18% 8%;
+    --editor-chrome: 220 15% 11%;
+    --editor-panel: 220 14% 10%;
     --card: 220 16% 10%;
     --card-foreground: 220 10% 92%;
     --popover: 220 16% 10%;
@@ -24,6 +30,9 @@
     --border: 220 14% 16%;
     --input: 220 14% 14%;
     --ring: 215 90% 56%;
+    --status-connected: 142 71% 45%;
+    --status-syncing: 44 96% 56%;
+    --status-offline: 0 84% 60%;
     --chart-1: 215 90% 56%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -35,6 +44,12 @@
   .light {
     --background: 216 30% 96%;
     --foreground: 220 20% 12%;
+    --surface: 216 26% 94%;
+    --surface-elevated: 0 0% 100%;
+    --surface-muted: 216 20% 89%;
+    --editor-surface: 216 30% 97%;
+    --editor-chrome: 216 24% 92%;
+    --editor-panel: 216 24% 94%;
     --card: 216 25% 93%;
     --card-foreground: 220 20% 12%;
     --popover: 216 25% 93%;
@@ -52,6 +67,9 @@
     --border: 216 18% 84%;
     --input: 216 20% 89%;
     --ring: 215 90% 52%;
+    --status-connected: 142 72% 32%;
+    --status-syncing: 38 92% 42%;
+    --status-offline: 0 72% 48%;
     --chart-1: 215 90% 52%;
     --chart-2: 160 55% 38%;
     --chart-3: 30 80% 50%;
@@ -170,6 +188,15 @@
 /* Smooth scroll for the whole page */
 html {
   scroll-behavior: smooth;
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease;
 }
 
 /* ═══════════════════════════════════════════════════════ */

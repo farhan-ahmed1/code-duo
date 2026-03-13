@@ -9,7 +9,7 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGIN ?? "http://localhost:3000")
 
 export const corsMiddleware = cors({
   origin: (origin) =>
-    ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    !origin || ALLOWED_ORIGINS.includes(origin) ? origin || ALLOWED_ORIGINS[0] : "",
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization"],
 });

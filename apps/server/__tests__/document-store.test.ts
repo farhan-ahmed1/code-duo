@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as Y from "yjs";
 import { DocumentStore } from "../src/persistence/document-store.js";
+import { mkdtempSync, existsSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 describe("DocumentStore", () => {
   let store: DocumentStore;
@@ -135,5 +138,28 @@ describe("DocumentStore", () => {
 
     expect(restored1.getText("content").toString()).toBe("Room 1 content");
     expect(restored2.getText("content").toString()).toBe("Room 2 content");
+  });
+
+  it("creates a file-backed database and persists across instances", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "codeduo-docstore-"));
+    const dbPath = join(tempDir, "nested", "codeduo.db");
+
+    const firstStore = new DocumentStore(dbPath);
+    const ydoc = new Y.Doc();
+    ydoc.getText("content").insert(0, "Persisted on disk");
+    firstStore.saveDocument("file-room", Y.encodeStateAsUpdate(ydoc));
+    firstStore.close();
+
+    expect(existsSync(dbPath)).toBe(true);
+
+    const secondStore = new DocumentStore(dbPath);
+    const loaded = secondStore.loadDocument("file-room");
+    const restored = new Y.Doc();
+    Y.applyUpdate(restored, loaded!);
+
+    expect(restored.getText("content").toString()).toBe("Persisted on disk");
+
+    secondStore.close();
+    rmSync(tempDir, { recursive: true, force: true });
   });
 });

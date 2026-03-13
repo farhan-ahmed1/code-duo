@@ -11,8 +11,8 @@ export default function EditorDemoSection() {
               <span style={{ color: "var(--blue)" }}>one editor</span>
             </h2>
             <p className="section-desc">
-              Watch Alice and Bob type simultaneously — no conflicts, no
-              waiting, no refreshes. Just real-time magic.
+              Watch Alice and Bob edit the same file with live presence,
+              real-time sync, and conflict-free convergence.
             </p>
 
             <div className="presence-badges" style={{ marginTop: "32px" }}>
@@ -46,7 +46,7 @@ export default function EditorDemoSection() {
                   borderRadius: "100px",
                 }}
               >
-                + invite
+                + share link
               </div>
             </div>
 
@@ -91,12 +91,12 @@ export default function EditorDemoSection() {
                   },
                   {
                     label: "connected",
-                    value: "2 / ∞",
+                    value: "2 live",
                     color: "var(--text-muted)",
                   },
                   {
-                    label: "sync latency",
-                    value: "< 50ms",
+                    label: "sync model",
+                    value: "CRDT + WS",
                     color: "var(--text-muted)",
                   },
                 ].map(({ label, value, color }) => (
@@ -140,7 +140,7 @@ export default function EditorDemoSection() {
                   color: "rgba(255,255,255,0.2)",
                 }}
               >
-                codeduo — collab.ts
+                code duo — collab.ts
               </div>
               <div
                 style={{ display: "flex", gap: "4px", alignItems: "center" }}
@@ -218,7 +218,7 @@ export default function EditorDemoSection() {
                 <div className="code-line">
                   <span className="tok-punct">{"  "}</span>
                   <span className="tok-string">
-                    &quot;wss://codeduo.dev&quot;
+                    &quot;wss://code-duo.dev&quot;
                   </span>
                   <span className="tok-punct">, </span>
                   <span className="tok-string">&quot;room-1&quot;</span>
@@ -229,7 +229,7 @@ export default function EditorDemoSection() {
                 <div className="code-line">&nbsp;</div>
                 <div className="code-line">
                   <span className="tok-comment">
-                    {"// Real-time \u2014 zero conflicts"}
+                    {"// Real-time, conflict-free"}
                   </span>
                 </div>
                 <div className="code-line active-line">

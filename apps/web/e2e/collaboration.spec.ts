@@ -2,6 +2,12 @@ import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
+let roomCreationRequestCount = 0;
+
+function nextTestClientIp() {
+  roomCreationRequestCount += 1;
+  return `198.51.100.${(roomCreationRequestCount % 200) + 1}`;
+}
 
 /** Create a room via the REST API and return its ID. */
 async function createRoom(
@@ -10,7 +16,10 @@ async function createRoom(
 ): Promise<string> {
   const res = await fetch(`${API_URL}/api/rooms`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-forwarded-for": nextTestClientIp(),
+    },
     body: JSON.stringify({ name, language }),
   });
   if (!res.ok) throw new Error(`Failed to create room: ${res.status}`);
@@ -61,6 +70,14 @@ async function getEditorText(page: Page): Promise<string> {
   });
 }
 
+async function openCreateRoomDialog(page: Page) {
+  await page
+    .getByRole("button", { name: /(?:open|create).*room/i })
+    .first()
+    .click();
+  await page.waitForSelector('[role="dialog"]', { timeout: 5_000 });
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -75,8 +92,7 @@ test.describe("Full-flow integration", () => {
     await creator.goto(BASE_URL);
 
     // Click "Create Room" to open the dialog
-    await creator.click('button[aria-label="Create a new room"]');
-    await creator.waitForSelector('[role="dialog"]', { timeout: 5_000 });
+    await openCreateRoomDialog(creator);
 
     // Fill in room name, pick Python as the language
     await creator.fill(
@@ -387,8 +403,7 @@ test.describe("Real-time collaboration", () => {
     await page.goto(BASE_URL);
 
     // Click Create Room
-    await page.click('button[aria-label="Create a new room"]');
-    await page.waitForSelector('[role="dialog"]');
+    await openCreateRoomDialog(page);
 
     // Fill form
     await page.fill('input[placeholder="My Coding Session"]', "My Test Room");

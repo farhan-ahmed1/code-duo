@@ -176,7 +176,7 @@ export default function CollaborativeEditor({
       {/* Empty state placeholder */}
       {isEmpty && editorInstance && (
         <div
-          className="pointer-events-none absolute left-16 top-1 select-none text-sm text-muted-foreground/40 font-mono"
+          className="pointer-events-none absolute left-14 top-4 select-none rounded-md border border-border/40 bg-background/55 px-2.5 py-1 text-xs text-muted-foreground/60 backdrop-blur-sm font-mono"
           aria-hidden="true"
         >
           Start typing to begin collaborating...

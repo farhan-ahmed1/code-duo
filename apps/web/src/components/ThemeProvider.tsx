@@ -7,6 +7,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     <NextThemesProvider
       attribute="class"
       defaultTheme="dark"
+      storageKey="code-duo:theme"
       enableSystem
       disableTransitionOnChange={false}
     >

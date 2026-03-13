@@ -23,6 +23,7 @@ export default function AccessibilityAnnouncer({
   const [announcement, setAnnouncement] = useState("");
   const prevStatusRef = useRef<ConnectionStatus>(connectionStatus);
   const prevUsersRef = useRef<Map<string, string>>(new Map());
+  const hasHydratedUsersRef = useRef(false);
 
   // Announce connection status changes
   useEffect(() => {
@@ -42,6 +43,13 @@ export default function AccessibilityAnnouncer({
   // Announce user join/leave events
   useEffect(() => {
     const currentMap = new Map(remoteUsers.map((u) => [u.id, u.name]));
+
+    if (!hasHydratedUsersRef.current) {
+      prevUsersRef.current = currentMap;
+      hasHydratedUsersRef.current = true;
+      return;
+    }
+
     const prevMap = prevUsersRef.current;
 
     // Detect joins

@@ -10,8 +10,8 @@ interface Feature {
 const FEATURES: Feature[] = [
   {
     title: "Real-Time Sync",
-    desc: "Changes propagate in milliseconds. No refresh, no polling — instant collaboration.",
-    tag: "< 50ms latency",
+    desc: "Shared edits propagate in real time, so collaborators stay in flow without refreshes or manual saves.",
+    tag: "Room-based collaboration",
     icon: (
       <svg
         width="16"
@@ -27,7 +27,7 @@ const FEATURES: Feature[] = [
   },
   {
     title: "Live Cursors",
-    desc: "See exactly where collaborators are editing. Color-coded cursors with name labels.",
+    desc: "See where collaborators are working with color-coded cursors, labels, and shared presence.",
     tag: "Per-user colors",
     icon: (
       <svg
@@ -44,9 +44,9 @@ const FEATURES: Feature[] = [
     ),
   },
   {
-    title: "Offline Resilient",
-    desc: "Keep coding when disconnected. Edits queue locally and sync when you reconnect.",
-    tag: "Zero data loss",
+    title: "Offline-First",
+    desc: "Keep working when the network drops. Local changes persist and sync back when the connection returns.",
+    tag: "IndexedDB-backed",
     icon: (
       <svg
         width="16"
@@ -68,7 +68,7 @@ const FEATURES: Feature[] = [
   },
   {
     title: "Zero Conflicts",
-    desc: "Yjs CRDTs merge concurrent edits deterministically. No manual resolution ever.",
+    desc: "Yjs CRDTs keep concurrent edits convergent, so the room stays consistent under real collaboration.",
     tag: "Deterministic merge",
     icon: (
       <svg
@@ -86,9 +86,9 @@ const FEATURES: Feature[] = [
     ),
   },
   {
-    title: "No Lock-In",
-    desc: "Open source and self-hostable. Your data never touches our servers.",
-    tag: "Self-hostable",
+    title: "Open by Default",
+    desc: "Open source and self-hostable, built on collaboration primitives developers can inspect and extend.",
+    tag: "Open source",
     icon: (
       <svg
         width="16"
@@ -104,8 +104,8 @@ const FEATURES: Feature[] = [
   },
   {
     title: "Monaco Editor",
-    desc: "Full VS Code editing experience — syntax highlighting, IntelliSense, multi-cursor.",
-    tag: "50+ languages",
+    desc: "The VS Code editing engine in the browser, with familiar shortcuts and language tooling.",
+    tag: "15+ languages",
     icon: (
       <svg
         width="16"
@@ -126,7 +126,7 @@ export default function FeaturesSection() {
   return (
     <section className="features-section">
       <div className="container">
-        <div className="section-label">Why CodeDuo</div>
+        <div className="section-label">Why Code Duo</div>
         <h2 className="section-title">
           Built for serious
           <br />

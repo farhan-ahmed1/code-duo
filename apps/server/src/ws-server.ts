@@ -10,12 +10,15 @@ import {
   messagesTotal,
   documentSavesTotal,
 } from "./utils/metrics";
+import {
+  incrementRoomConnection,
+  decrementRoomConnection,
+} from "./utils/realtime-stats";
 import * as Y from "yjs";
 import { DOCUMENT_DEBOUNCE_MS } from "@code-duo/shared";
 
 const documentStore = new DocumentStore();
 const roomStore = new RoomStore();
-const roomConnectionCounts = new Map<string, number>();
 const saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 // Export for use by the cleanup job
@@ -85,8 +88,7 @@ export function setupWebSocketServer(wss: WebSocketServer) {
     const log = createContextLogger({ roomId });
 
     // Track connection counts
-    const count = (roomConnectionCounts.get(roomId) ?? 0) + 1;
-    roomConnectionCounts.set(roomId, count);
+    const count = incrementRoomConnection(roomId);
     activeConnections.inc();
     if (count === 1) activeRooms.inc();
 
@@ -106,15 +108,10 @@ export function setupWebSocketServer(wss: WebSocketServer) {
     });
 
     ws.on("close", () => {
-      const remaining = Math.max(
-        0,
-        (roomConnectionCounts.get(roomId) ?? 1) - 1,
-      );
-      roomConnectionCounts.set(roomId, remaining);
+      const remaining = decrementRoomConnection(roomId);
       activeConnections.dec();
       if (remaining === 0) {
         activeRooms.dec();
-        roomConnectionCounts.delete(roomId);
       }
       log.info({ event: "ws_disconnect", remaining }, "Client disconnected");
     });

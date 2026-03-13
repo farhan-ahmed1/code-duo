@@ -88,11 +88,11 @@ export default function UserBadge({
     <div
       data-testid="presence-user"
       className={cn(
-        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-all duration-200",
+        "flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-all duration-200",
         "animate-in fade-in-0 slide-in-from-right-2 duration-300",
         isLocal
-          ? "bg-gray-800/60 ring-1 ring-gray-700/40"
-          : "hover:bg-gray-800/40",
+          ? "bg-surface-elevated ring-1 ring-border shadow-sm"
+          : "hover:bg-accent/70",
         isClickable && "cursor-pointer",
       )}
       onClick={
@@ -125,7 +125,7 @@ export default function UserBadge({
     >
       {/* Colored dot matching cursor color */}
       <span
-        className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-gray-900"
+        className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-background"
         style={{ backgroundColor: user.color }}
       />
 
@@ -136,16 +136,16 @@ export default function UserBadge({
           onChange={(e) => setEditName(e.target.value)}
           onBlur={handleSubmit}
           onKeyDown={handleKeyDown}
-          className="w-full min-w-0 bg-transparent text-sm text-gray-200 outline-none placeholder:text-gray-500"
+          className="w-full min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           placeholder="Your name"
           maxLength={20}
         />
       ) : (
-        <span className="min-w-0 truncate text-gray-200">{user.name}</span>
+        <span className="min-w-0 flex-1 truncate text-foreground">{user.name}</span>
       )}
 
       {isLocal && !isEditing && (
-        <span className="ml-auto shrink-0 rounded bg-primary/20 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+        <span className="shrink-0 rounded bg-primary/20 px-1.5 py-0.5 text-[10px] font-medium text-primary">
           you
         </span>
       )}
@@ -159,7 +159,7 @@ export default function UserBadge({
     <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>{badge}</TooltipTrigger>
-        <TooltipContent side="left" className="text-xs">
+        <TooltipContent side="left" sideOffset={10} className="max-w-[13rem]">
           <p className="font-medium">{user.name}</p>
           <p className="text-muted-foreground">Connected for {elapsed}</p>
           {isLocal && (

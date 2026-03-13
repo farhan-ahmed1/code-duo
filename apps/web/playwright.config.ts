@@ -13,6 +13,8 @@ import { defineConfig, devices } from "@playwright/test";
  */
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
+const USE_MANAGED_WEB_SERVER =
+  !process.env.SKIP_PLAYWRIGHT_WEBSERVER && BASE_URL.includes("localhost");
 
 export default defineConfig({
   testDir: "./e2e",
@@ -49,20 +51,37 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      testIgnore: /performance-benchmark\.spec\.ts/,
+      testIgnore: [
+        /performance-benchmark\.spec\.ts/,
+        /stress-test\.spec\.ts/,
+        /deployed-smoke\.spec\.ts/,
+      ],
     },
     {
       name: "firefox",
       use: { ...devices["Desktop Firefox"] },
-      testIgnore: [/performance-benchmark\.spec\.ts/, /stress-test\.spec\.ts/],
+      testIgnore: [
+        /performance-benchmark\.spec\.ts/,
+        /stress-test\.spec\.ts/,
+        /deployed-smoke\.spec\.ts/,
+      ],
     },
     {
       name: "webkit",
       use: { ...devices["Desktop Safari"] },
-      testIgnore: [/performance-benchmark\.spec\.ts/, /stress-test\.spec\.ts/],
+      testIgnore: [
+        /performance-benchmark\.spec\.ts/,
+        /stress-test\.spec\.ts/,
+        /deployed-smoke\.spec\.ts/,
+      ],
     },
 
-    // ── Stress / performance tests – Chromium only (resource-intensive) ───
+    // ── Opt-in test projects ───────────────────────────────────────────────
+    {
+      name: "deployed",
+      testMatch: /deployed-smoke\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
     {
       name: "stress",
       testMatch: /stress-test\.spec\.ts/,
@@ -79,19 +98,21 @@ export default defineConfig({
   /* Start frontend + backend dev servers automatically when not already up.
    * Set reuseExistingServer: true so running `pnpm dev` manually first is
    * also supported — Playwright will attach to the already-running process. */
-  webServer: [
-    {
-      command: "DISABLE_RATE_LIMIT=true pnpm --filter @code-duo/server dev",
-      url: "http://localhost:4000/api/health",
-      reuseExistingServer: true,
-      timeout: 60_000,
-      env: { DISABLE_RATE_LIMIT: "true" },
-    },
-    {
-      command: "pnpm --filter @code-duo/web dev",
-      url: "http://localhost:3000",
-      reuseExistingServer: true,
-      timeout: 60_000,
-    },
-  ],
+  webServer: USE_MANAGED_WEB_SERVER
+    ? [
+        {
+          command: "DISABLE_RATE_LIMIT=true pnpm --filter @code-duo/server dev",
+          url: "http://localhost:4000/api/health",
+          reuseExistingServer: true,
+          timeout: 60_000,
+          env: { DISABLE_RATE_LIMIT: "true" },
+        },
+        {
+          command: "pnpm --filter @code-duo/web dev",
+          url: "http://localhost:3000",
+          reuseExistingServer: true,
+          timeout: 60_000,
+        },
+      ]
+    : undefined,
 });

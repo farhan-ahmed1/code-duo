@@ -17,12 +17,12 @@ export default function LandingFooter() {
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <Image
             src={logoSrc}
-            alt="CodeDuo logo"
+            alt="Code Duo logo"
             width={24}
             height={24}
             className="nav-logo-img"
           />
-          <span>CodeDuo</span>
+          <span>Code Duo</span>
         </div>
         <span>© 2026</span>
       </div>
