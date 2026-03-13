@@ -76,17 +76,13 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           test -n "$RAILWAY_TOKEN" || { echo "Missing RAILWAY_TOKEN secret"; exit 1; }
-          test -n "${{ vars.RAILWAY_SERVICE }}" || { echo "Missing RAILWAY_SERVICE variable"; exit 1; }
           test -n "${{ vars.RAILWAY_PUBLIC_URL }}" || { echo "Missing RAILWAY_PUBLIC_URL variable"; exit 1; }
 
       - name: Deploy server
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway up \
-            --service "${{ vars.RAILWAY_SERVICE }}" \
-            --environment "${{ needs.resolve_target.outputs.environment }}" \
-            --detach
+          railway up --detach
 
       - name: Wait for Railway health check
         run: |
@@ -141,7 +137,6 @@ jobs:
           vercel pull \
             --yes \
             --environment="${{ needs.resolve_target.outputs.vercel_target }}" \
-            --cwd=apps/web \
             --token="$VERCEL_TOKEN"
 
       - name: Build Vercel artifacts
@@ -149,11 +144,10 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           if [[ "${{ needs.resolve_target.outputs.vercel_prod }}" == "true" ]]; then
-            vercel build --prod --cwd=apps/web --token="$VERCEL_TOKEN"
+            vercel build --prod --token="$VERCEL_TOKEN"
           else
             vercel build \
               --target="${{ needs.resolve_target.outputs.vercel_target }}" \
-              --cwd=apps/web \
               --token="$VERCEL_TOKEN"
           fi
 
@@ -163,9 +157,9 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           if [[ "${{ needs.resolve_target.outputs.vercel_prod }}" == "true" ]]; then
-            deployment_url="$(vercel deploy --prebuilt --prod --cwd=apps/web --token="$VERCEL_TOKEN")"
+            deployment_url="$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")"
           else
-            deployment_url="$(vercel deploy --prebuilt --target="${{ needs.resolve_target.outputs.vercel_target }}" --cwd=apps/web --token="$VERCEL_TOKEN")"
+            deployment_url="$(vercel deploy --prebuilt --target="${{ needs.resolve_target.outputs.vercel_target }}" --token="$VERCEL_TOKEN")"
           fi
 
           echo "deployment_url=$deployment_url" >> "$GITHUB_OUTPUT"
