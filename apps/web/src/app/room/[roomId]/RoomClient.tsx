@@ -16,6 +16,7 @@ import AccessibilityAnnouncer from "@/components/AccessibilityAnnouncer";
 import type { EditorLanguage } from "@code-duo/shared";
 import { YJS_TEXT_KEY } from "@code-duo/shared";
 import { Users } from "lucide-react";
+import { useTheme } from "next-themes";
 
 interface RoomClientProps {
   roomId: string;
@@ -28,12 +29,13 @@ export default function RoomClient({ roomId }: RoomClientProps) {
   const { status: connectionStatus, syncStatus } =
     useConnectionStatus(provider);
   const { metrics } = usePerformanceMetrics(provider, ydoc);
+  const { resolvedTheme, setTheme } = useTheme();
 
-  const theme = useEditorStore((s) => s.theme);
-  const toggleTheme = useEditorStore((s) => s.toggleTheme);
   const storeSetLanguage = useEditorStore((s) => s.setLanguage);
+  const theme = resolvedTheme === "light" ? "light" : "vs-dark";
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [debugOpen, setDebugOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -112,16 +114,29 @@ export default function RoomClient({ roomId }: RoomClientProps) {
 
   // Auto-collapse on narrow viewports; re-expand when the screen grows
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 768px)");
-    setIsMobile(mq.matches);
-    setSidebarOpen(!mq.matches);
-    function handleChange(e: MediaQueryListEvent) {
-      setIsMobile(e.matches);
-      setSidebarOpen(!e.matches);
+    const compactMq = window.matchMedia("(max-width: 1023px)");
+    const mobileMq = window.matchMedia("(max-width: 640px)");
+
+    function syncLayoutState() {
+      const compact = compactMq.matches;
+      const mobile = mobileMq.matches;
+      setIsCompactLayout(compact);
+      setIsMobile(mobile);
+      setSidebarOpen(!compact);
     }
-    mq.addEventListener("change", handleChange);
-    return () => mq.removeEventListener("change", handleChange);
+
+    syncLayoutState();
+    compactMq.addEventListener("change", syncLayoutState);
+    mobileMq.addEventListener("change", syncLayoutState);
+    return () => {
+      compactMq.removeEventListener("change", syncLayoutState);
+      mobileMq.removeEventListener("change", syncLayoutState);
+    };
   }, []);
+
+  function handleThemeToggle() {
+    setTheme(resolvedTheme === "light" ? "dark" : "light");
+  }
 
   /** Update language in both Y.Map (shared) and Zustand store (local). */
   function handleLanguageChange(lang: EditorLanguage) {
@@ -140,11 +155,11 @@ export default function RoomClient({ roomId }: RoomClientProps) {
         language={language}
         onLanguageChange={handleLanguageChange}
         theme={theme}
-        onThemeToggle={toggleTheme}
+        onThemeToggle={handleThemeToggle}
         connectedUsers={connectedUsers}
       />
 
-      <div className="relative flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-hidden bg-editor">
         {/* Editor takes remaining width (~85% when sidebar open) */}
         <div className="min-w-0 flex-1 overflow-hidden">
           <CollaborativeEditor
@@ -159,37 +174,36 @@ export default function RoomClient({ roomId }: RoomClientProps) {
           />
         </div>
 
-        {/* Mobile: overlay sidebar; Desktop: inline sidebar */}
-        {isMobile && sidebarOpen && (
-          <div
-            className="absolute inset-0 z-10 bg-black/40"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
+        {/* Tablet/mobile: overlay sidebar; Desktop: inline sidebar */}
+        <div
+          className={`absolute inset-0 z-10 bg-black/40 transition-opacity duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isCompactLayout && sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
+          onClick={() => setSidebarOpen(false)}
+        />
         <div
           className={
-            isMobile
-              ? `absolute right-0 top-0 z-20 h-full transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "translate-x-full"}`
-              : ""
+            isCompactLayout
+              ? `absolute right-2 top-2 bottom-2 z-20 w-[min(15rem,calc(100vw-1.5rem))] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] sm:w-60 ${sidebarOpen ? "translate-x-0" : "translate-x-[110%]"}`
+              : `relative h-full shrink-0 overflow-hidden transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${sidebarOpen ? "w-[clamp(15rem,15vw,18.75rem)]" : "w-10"}`
           }
         >
           <PresenceBar
             awareness={awareness}
-            isOpen={isMobile ? true : sidebarOpen}
+            isOpen={isCompactLayout ? true : sidebarOpen}
             onToggle={() => setSidebarOpen((prev) => !prev)}
+            isCollapsible
             onScrollToUser={handleScrollToUser}
           />
         </div>
 
         {/* Floating mobile toggle when sidebar is hidden */}
-        {isMobile && !sidebarOpen && (
+        {isCompactLayout && !sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="absolute bottom-4 right-4 z-10 flex items-center gap-1.5 rounded-full bg-gray-800 px-3 py-2 text-xs font-medium text-gray-300 shadow-lg ring-1 ring-gray-700 transition-all hover:bg-gray-700 hover:text-white active:scale-95"
+            className="absolute bottom-4 right-4 z-10 flex items-center gap-1.5 rounded-full border border-border bg-surface-elevated px-3 py-2 text-xs font-medium text-foreground shadow-panel transition-all hover:bg-accent active:scale-95"
             aria-label="Show presence bar"
           >
             <Users className="h-3.5 w-3.5" />
-            <span>{connectedUsers}</span>
+            <span>{isMobile ? connectedUsers : `Presence ${connectedUsers}`}</span>
           </button>
         )}
 

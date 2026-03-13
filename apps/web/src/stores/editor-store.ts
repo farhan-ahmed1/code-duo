@@ -10,6 +10,10 @@ function getStoredTheme(): "vs-dark" | "light" {
   return stored === "light" ? "light" : "vs-dark";
 }
 
+function persistTheme(theme: "vs-dark" | "light") {
+  localStorage.setItem(THEME_STORAGE_KEY, theme === "light" ? "light" : "dark");
+}
+
 interface EditorState {
   language: EditorLanguage;
   theme: "vs-dark" | "light";
@@ -35,13 +39,13 @@ export const useEditorStore = create<EditorState>((set) => ({
   fontSize: 14,
   setLanguage: (language) => set({ language }),
   setTheme: (theme) => {
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    persistTheme(theme);
     set({ theme });
   },
   toggleTheme: () =>
     set((state) => {
       const next = state.theme === "vs-dark" ? "light" : "vs-dark";
-      localStorage.setItem(THEME_STORAGE_KEY, next);
+      persistTheme(next);
       return { theme: next };
     }),
   setFontSize: (fontSize) => set({ fontSize }),

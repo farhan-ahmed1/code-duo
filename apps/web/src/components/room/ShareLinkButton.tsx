@@ -38,7 +38,7 @@ export default function ShareLinkButton({ roomId }: ShareLinkButtonProps) {
         readOnly
         value={url}
         onClick={(e) => (e.target as HTMLInputElement).select()}
-        className="h-8 flex-1 border-border bg-secondary text-xs font-mono text-muted-foreground select-all cursor-text"
+        className="hidden h-8 w-44 border-border bg-secondary text-xs font-mono text-muted-foreground select-all cursor-text md:block lg:w-56"
         aria-label="Room share URL"
       />
       <TooltipProvider delayDuration={0}>
