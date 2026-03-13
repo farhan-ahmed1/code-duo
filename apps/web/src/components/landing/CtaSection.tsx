@@ -10,21 +10,21 @@ export default function CtaSection({ onCreateRoom }: CtaSectionProps) {
       <div className="container">
         <div className="cta-box">
           <h2>
-            Ready to code
+            Ready to open
             <br />
-            <em>together?</em>
+            <em>a room?</em>
           </h2>
           <p>
-            Create a room in seconds. No sign-up, no setup, no friction. Just
-            share the link and start collaborating.
+            Open a room in seconds, share the link, and start collaborating in
+            a browser-based editor built for serious technical work.
           </p>
           <div className="cta-actions">
             <button
               onClick={onCreateRoom}
               className="btn-primary-lg"
-              aria-label="Start a new coding session"
+              aria-label="Open a new collaborative coding room"
             >
-              Start a session
+              Open a room
               <svg
                 width="14"
                 height="14"
@@ -48,7 +48,7 @@ export default function CtaSection({ onCreateRoom }: CtaSectionProps) {
             </a>
           </div>
           <p className="cta-note">
-            Free &amp; open source — no account required
+            Free and open source. No account required.
           </p>
         </div>
       </div>

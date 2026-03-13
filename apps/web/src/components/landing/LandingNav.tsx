@@ -26,12 +26,12 @@ export default function LandingNav({
       <Link href="/" className="nav-logo">
         <Image
           src={logoSrc}
-          alt="CodeDuo logo"
+          alt="Code Duo logo"
           width={32}
           height={32}
           className="nav-logo-img"
         />
-        CodeDuo
+        Code Duo
       </Link>
       <ul className="nav-links">
         <li>
@@ -68,9 +68,9 @@ export default function LandingNav({
         <button
           onClick={onCreateRoom}
           className="btn-primary"
-          aria-label="Create a new room"
+          aria-label="Open a new collaborative coding room"
         >
-          Create room{" "}
+          Open a room{" "}
           <span
             className="kbd"
             style={{

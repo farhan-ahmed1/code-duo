@@ -6,7 +6,8 @@ export default function HowItWorksSection() {
       <div className="container">
         <div className="section-label">How it works</div>
         <h2 className="section-title">
-          Up in <span style={{ color: "var(--blue)" }}>three</span> steps
+          Open a room in <span style={{ color: "var(--blue)" }}>three</span>{" "}
+          steps
         </h2>
         <StepsSection />
       </div>

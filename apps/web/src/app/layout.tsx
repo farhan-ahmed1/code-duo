@@ -5,19 +5,22 @@ import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: {
-    default: "Code Duo — Real-time Collaborative Coding",
+    default: "Code Duo — Code together, conflict-free",
     template: "%s | Code Duo",
   },
   description:
-    "Real-time collaborative code editor powered by CRDTs. No merge conflicts, no polling. Open a room and start coding together instantly.",
+    "Real-time collaborative coding, powered by CRDTs. Open a room, share the link, and stay in sync with live cursors, offline resilience, and dependable conflict-free editing.",
   keywords: [
     "collaborative coding",
-    "real-time editor",
+    "real-time collaborative coding",
+    "browser-based code editor",
     "pair programming",
+    "technical interviews",
+    "coding education",
     "CRDT",
     "Yjs",
     "Monaco Editor",
-    "code editor",
+    "collaborative code editor",
     "live cursors",
   ],
   authors: [{ name: "Code Duo" }],
@@ -34,23 +37,23 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Code Duo",
-    title: "Code Duo — Real-time Collaborative Coding",
+    title: "Code Duo — Code together, conflict-free",
     description:
-      "Real-time collaborative code editor powered by CRDTs. No merge conflicts, no polling. Open a room and start coding together.",
+      "Real-time collaborative coding, powered by CRDTs. Open a room, share the link, and stay in sync with live cursors and dependable conflict-free editing.",
     images: [
       {
         url: "/og-image.svg",
         width: 1200,
         height: 630,
-        alt: "Code Duo — Real-time collaborative coding",
+        alt: "Code Duo — Code together, conflict-free",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Code Duo — Real-time Collaborative Coding",
+    title: "Code Duo — Code together, conflict-free",
     description:
-      "Real-time collaborative code editor powered by CRDTs. No merge conflicts, no polling.",
+      "Real-time collaborative coding, powered by CRDTs, with live cursors, offline resilience, and dependable conflict-free editing.",
     images: ["/og-image.svg"],
   },
   robots: {

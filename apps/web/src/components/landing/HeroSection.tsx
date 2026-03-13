@@ -12,21 +12,23 @@ export default function HeroSection({
   return (
     <section className="hero">
       <div className="container">
-        <div className="hero-eyebrow fade-up delay-1">Now in open beta</div>
+        <div className="hero-eyebrow fade-up delay-1">
+          Real-time collaborative coding, powered by CRDTs
+        </div>
         <h1 className="fade-up delay-2">
           Code together,
           <br />
           <em>conflict-free</em>
         </h1>
         <p className="hero-sub fade-up delay-3">
-          Real-time collaborative editing powered by CRDTs. No merge hell, no
-          polling. Just open a room and code.
+          Open a room, share the link, and start coding together with live
+          cursors, dependable sync, and offline resilience.
         </p>
         <div className="hero-actions fade-up delay-4">
           <button
             onClick={onCreateRoom}
             className="btn-primary-lg"
-            aria-label="Start a new coding session"
+            aria-label="Open a new collaborative coding room"
           >
             <svg
               width="15"
@@ -39,7 +41,7 @@ export default function HeroSection({
             >
               <path d="M5 3l14 9-14 9V3z" />
             </svg>
-            Start a session
+            Open a room
             <span
               className="kbd"
               style={{
@@ -72,7 +74,7 @@ export default function HeroSection({
           </button>
         </div>
         <p className="hero-note fade-up delay-5">
-          Free &amp; open source — no account required
+          Free and open source. No account required.
         </p>
 
         {/* Three pillars */}
@@ -91,10 +93,10 @@ export default function HeroSection({
               </svg>
             </div>
             <div>
-              <div className="pill-title">Fast</div>
+              <div className="pill-title">Immediate</div>
               <div className="pill-desc">
-                Syncs in under 50ms. WebSocket-native, no polling, no latency
-                surprises.
+                Shared edits appear in real time through a collaboration loop
+                built for active coding.
               </div>
             </div>
           </div>
@@ -112,10 +114,10 @@ export default function HeroSection({
               </svg>
             </div>
             <div>
-              <div className="pill-title">Intelligent</div>
+              <div className="pill-title">Conflict-free</div>
               <div className="pill-desc">
-                Yjs CRDTs merge concurrent edits deterministically. Zero
-                conflict resolution.
+                Yjs CRDTs keep concurrent edits convergent without manual
+                resolution.
               </div>
             </div>
           </div>
@@ -136,10 +138,10 @@ export default function HeroSection({
               </svg>
             </div>
             <div>
-              <div className="pill-title">Collaborative</div>
+              <div className="pill-title">Visible presence</div>
               <div className="pill-desc">
-                Live cursors with name labels, presence indicators, and room
-                sharing in one click.
+                Live cursors, user labels, and simple room sharing keep every
+                collaborator in context.
               </div>
             </div>
           </div>

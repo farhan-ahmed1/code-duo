@@ -10,19 +10,19 @@ const STEPS = [
   {
     number: "01",
     title: "Create a room",
-    desc: "Spin up a session in one click. Pick a language, name your room, and you're live.",
-    code: ["$ curl -X POST /api/rooms", '→ { "id": "abc-123" }'],
+    desc: "Open a room in one click. Choose a language, name it if you want, and start in seconds.",
+    code: ["$ curl -X POST /api/rooms", '→ { "id": "a1b2c3d4" }'],
   },
   {
     number: "02",
     title: "Share the link",
-    desc: "Send your teammates a room URL. No sign-up required — just click and join.",
-    code: ["codeduo.dev/room/abc-123", "✓ Link copied to clipboard"],
+    desc: "Share the room URL with a collaborator. No account required for the first session.",
+    code: ["code-duo.dev/room/a1b2c3d4", "✓ Link copied to clipboard"],
   },
   {
     number: "03",
     title: "Code together",
-    desc: "Cursors appear in real time. Edits merge via CRDTs. Zero conflicts, zero friction.",
+    desc: "Live cursors appear immediately. Edits converge via CRDTs, so everyone stays in sync.",
     code: ["// 2 users connected", "Alice: line 14...", "Bob:   line 27..."],
   },
 ];

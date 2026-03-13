@@ -1,8 +1,8 @@
 const STATS = [
-  { value: "<50ms", label: "Sync latency" },
-  { value: "100%", label: "Conflict-free" },
-  { value: "0 KB", label: "Data on our servers" },
-  { value: "∞", label: "Concurrent editors" },
+  { value: "CRDT", label: "Conflict-free model" },
+  { value: "15+", label: "Supported languages" },
+  { value: "SQLite", label: "Persistent snapshots" },
+  { value: "IndexedDB", label: "Offline local cache" },
 ];
 
 export default function StatsSection() {
