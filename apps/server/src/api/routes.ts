@@ -9,6 +9,10 @@ import {
   activeConnections,
   activeRooms,
 } from "../utils/metrics";
+import {
+  getRoomConnectionCount,
+  getRealtimeStats,
+} from "../utils/realtime-stats";
 
 const roomStore = new RoomStore();
 export const apiRouter = new Hono();
@@ -60,7 +64,10 @@ apiRouter.post("/rooms", roomCreationRateLimit, async (c) => {
 apiRouter.get("/rooms/:id", (c) => {
   const room = roomStore.getRoom(c.req.param("id"));
   if (!room) return c.json({ error: "Room not found" }, 404);
-  return c.json(room);
+  return c.json({
+    ...room,
+    activeUserCount: getRoomConnectionCount(room.id),
+  });
 });
 
 /** GET /api/rooms — list rooms with pagination */
@@ -102,6 +109,7 @@ apiRouter.get("/health", (c) => {
       active: getGaugeValue(activeConnections),
       rooms: getGaugeValue(activeRooms),
     },
+    realtime: getRealtimeStats(),
     memory: {
       rss: mem.rss,
       heapUsed: mem.heapUsed,

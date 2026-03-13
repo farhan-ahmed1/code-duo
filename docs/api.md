@@ -65,7 +65,8 @@ Retrieve metadata for a single room.
   "name": "Pair Programming Session",
   "language": "python",
   "createdAt": "2026-02-26T10:00:00.000Z",
-  "updatedAt": "2026-02-26T10:00:00.000Z"
+  "updatedAt": "2026-02-26T10:00:00.000Z",
+  "activeUserCount": 2
 }
 ```
 
@@ -132,6 +133,10 @@ Comprehensive health check. Returns database connectivity status, active connect
   "connections": {
     "active": 12,
     "rooms": 4
+  },
+  "realtime": {
+    "activeConnections": 12,
+    "activeRooms": 4
   },
   "memory": {
     "rss": 52428800,
@@ -307,6 +312,133 @@ When clients connect to a room:
 3. When the last client disconnects, `writeState` fires immediately and saves the final document state to SQLite.
 
 Clients with `y-indexeddb` installed (all Code Duo frontend clients) also persist every update locally. On reconnect, both the IndexedDB state and the server state are merged automatically.
+
+### Critical Integration Example: Hono + y-websocket Upgrade
+
+```ts
+import { getRequestListener } from "@hono/node-server";
+import { createServer } from "node:http";
+import { Hono } from "hono";
+import { WebSocketServer } from "ws";
+import { setupWebSocketServer } from "./ws-server";
+
+const app = new Hono();
+const httpServer = createServer();
+const wss = new WebSocketServer({ noServer: true });
+
+setupWebSocketServer(wss);
+
+httpServer.on("upgrade", (req, socket, head) => {
+  if (!req.url?.startsWith("/yjs/")) {
+    socket.destroy();
+    return;
+  }
+
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wss.emit("connection", ws, req);
+  });
+});
+
+httpServer.on("request", getRequestListener(app.fetch));
+```
+
+### Critical Integration Example: Persistence Hooks
+
+```ts
+import * as Y from "yjs";
+import { setPersistence } from "y-websocket/bin/utils";
+
+setPersistence({
+  bindState: async (roomId, ydoc) => {
+    const persisted = documentStore.loadDocument(roomId);
+    if (persisted) {
+      Y.applyUpdate(ydoc, persisted);
+    }
+
+    ydoc.on("update", () => scheduleSave(roomId, ydoc));
+  },
+  writeState: async (roomId, ydoc) => {
+    const state = Y.encodeStateAsUpdate(ydoc);
+    documentStore.saveDocument(roomId, state);
+  },
+});
+```
+
+## Database Schema
+
+```sql
+CREATE TABLE rooms (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  language TEXT NOT NULL DEFAULT 'typescript',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  accessed_at TEXT NOT NULL
+);
+
+CREATE TABLE documents (
+  room_id TEXT PRIMARY KEY,
+  state BLOB NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+);
+```
+
+Room expiration uses a 7-day TTL implemented by the hourly cleanup job. Any room whose `accessed_at` is older than 7 days is deleted, and its persisted Yjs snapshot is removed from `documents` before the room row is purged.
+
+## Security Controls
+
+- Input validation: room names must be strings no longer than 100 characters and may only contain the approved punctuation set; languages must be in the shared supported language enum.
+- Rate limiting: `POST /api/rooms` is limited to 10 room creations per IP per hour, and all `/api/*` routes are limited to 100 requests per IP per minute.
+- CORS: only configured frontend origins are allowed through `ALLOWED_ORIGIN`.
+- Request body limits: non-GET API requests larger than 64 KB are rejected with `413` even when `Content-Length` is absent.
+
+## OpenAPI-Style Summary
+
+```yaml
+openapi: 3.1.0
+info:
+  title: Code Duo API
+  version: 1.0.0
+paths:
+  /api/rooms:
+    post:
+      summary: Create a room
+      responses:
+        '201':
+          description: Room created
+    get:
+      summary: List rooms
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paginated room list
+  /api/rooms/{id}:
+    get:
+      summary: Get room metadata and active users
+      responses:
+        '200':
+          description: Room metadata returned
+        '404':
+          description: Room not found
+  /api/health:
+    get:
+      summary: Liveness and dependency health
+  /api/health/ready:
+    get:
+      summary: Readiness probe
+  /metrics:
+    get:
+      summary: Prometheus metrics scrape endpoint
+```
 
 ---
 

@@ -40,7 +40,15 @@ export function validateRoomName(name: unknown): RoomNameValidation {
   }
 
   const raw = typeof name === "string" ? name : "";
-  const sanitized = sanitizeString(raw).slice(0, MAX_ROOM_NAME_LENGTH);
+  const sanitized = sanitizeString(raw);
+
+  if (sanitized.length > MAX_ROOM_NAME_LENGTH) {
+    return {
+      valid: false,
+      sanitized: sanitized.slice(0, MAX_ROOM_NAME_LENGTH),
+      error: `Room name must be ${MAX_ROOM_NAME_LENGTH} characters or fewer`,
+    };
+  }
 
   if (sanitized.length === 0) {
     // Empty is OK — we fall back to "My Room"
@@ -97,6 +105,10 @@ export function validateLanguage(lang: unknown): LanguageValidation {
  * the body if no header is present.
  */
 export const bodySizeLimit: MiddlewareHandler = async (c, next) => {
+  if (["GET", "HEAD", "OPTIONS"].includes(c.req.method)) {
+    return next();
+  }
+
   const contentLength = c.req.header("content-length");
   if (contentLength && Number(contentLength) > MAX_BODY_SIZE) {
     return c.json(
@@ -106,5 +118,19 @@ export const bodySizeLimit: MiddlewareHandler = async (c, next) => {
       413,
     );
   }
+
+  if (!contentLength) {
+    const clonedRequest = c.req.raw.clone();
+    const buffer = await clonedRequest.arrayBuffer();
+    if (buffer.byteLength > MAX_BODY_SIZE) {
+      return c.json(
+        {
+          error: `Request body too large. Maximum size is ${MAX_BODY_SIZE} bytes.`,
+        },
+        413,
+      );
+    }
+  }
+
   await next();
 };
