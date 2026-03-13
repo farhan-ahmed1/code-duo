@@ -1,5 +1,6 @@
 import { MiddlewareHandler } from "hono";
 import { logger } from "../utils/logger";
+import { ERROR_CODES, apiError } from "./errors";
 
 /**
  * Sliding-window counter rate limiter.
@@ -124,10 +125,11 @@ export const roomCreationRateLimit: MiddlewareHandler = async (c, next) => {
     logger.warn({ ip, limit: "room-creation" }, "Rate limit exceeded");
     c.header("Retry-After", String(retryAfterSeconds));
     return c.json(
-      {
-        error: "Too many rooms created. Please try again later.",
-        retryAfter: retryAfterSeconds,
-      },
+      apiError(
+        "Too many rooms created. Please try again later.",
+        ERROR_CODES.RATE_LIMIT_ROOM_CREATION,
+        { retryAfter: retryAfterSeconds },
+      ),
       429,
     );
   }
@@ -154,10 +156,11 @@ export const apiRateLimit: MiddlewareHandler = async (c, next) => {
     logger.warn({ ip, limit: "api-general" }, "Rate limit exceeded");
     c.header("Retry-After", String(retryAfterSeconds));
     return c.json(
-      {
-        error: "Too many requests. Please try again later.",
-        retryAfter: retryAfterSeconds,
-      },
+      apiError(
+        "Too many requests. Please try again later.",
+        ERROR_CODES.RATE_LIMIT_API,
+        { retryAfter: retryAfterSeconds },
+      ),
       429,
     );
   }

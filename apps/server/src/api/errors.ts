@@ -1,0 +1,28 @@
+export const ERROR_CODES = {
+  INVALID_JSON_BODY: "INVALID_JSON_BODY",
+  ROOM_NAME_INVALID_TYPE: "ROOM_NAME_INVALID_TYPE",
+  ROOM_NAME_TOO_LONG: "ROOM_NAME_TOO_LONG",
+  ROOM_NAME_INVALID_CHARACTERS: "ROOM_NAME_INVALID_CHARACTERS",
+  LANGUAGE_INVALID_TYPE: "LANGUAGE_INVALID_TYPE",
+  LANGUAGE_UNSUPPORTED: "LANGUAGE_UNSUPPORTED",
+  ROOM_NOT_FOUND: "ROOM_NOT_FOUND",
+  REQUEST_BODY_TOO_LARGE: "REQUEST_BODY_TOO_LARGE",
+  RATE_LIMIT_API: "RATE_LIMIT_API",
+  RATE_LIMIT_ROOM_CREATION: "RATE_LIMIT_ROOM_CREATION",
+  SERVER_NOT_READY: "SERVER_NOT_READY",
+  INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
+} as const;
+
+export type ApiErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
+
+export function apiError(
+  error: string,
+  code: ApiErrorCode,
+  extra?: Record<string, number | string | boolean | null>,
+) {
+  return {
+    error,
+    code,
+    ...(extra ?? {}),
+  };
+}

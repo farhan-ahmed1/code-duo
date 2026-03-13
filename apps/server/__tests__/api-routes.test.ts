@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { Hono } from "hono";
 import { apiRouter, roomStore } from "../src/api/routes.js";
 import { bodySizeLimit } from "../src/api/validation.js";
+import { ERROR_CODES } from "../src/api/errors.js";
 
 const createdRoomIds: string[] = [];
 
@@ -82,6 +83,33 @@ describe("API routes", () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({
       error: "Room name must be 100 characters or fewer",
+      code: ERROR_CODES.ROOM_NAME_TOO_LONG,
+    });
+  });
+
+  it("returns a stable error code for invalid JSON bodies", async () => {
+    const response = await apiRouter.request("http://localhost/rooms", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: '{"name": "broken"',
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "Invalid JSON body",
+      code: ERROR_CODES.INVALID_JSON_BODY,
+    });
+  });
+
+  it("returns a stable error code for missing rooms", async () => {
+    const response = await apiRouter.request("http://localhost/rooms/does-not-exist");
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "Room not found",
+      code: ERROR_CODES.ROOM_NOT_FOUND,
     });
   });
 
@@ -115,6 +143,7 @@ describe("API routes", () => {
     expect(response.status).toBe(413);
     await expect(response.json()).resolves.toMatchObject({
       error: "Request body too large. Maximum size is 65536 bytes.",
+      code: ERROR_CODES.REQUEST_BODY_TOO_LARGE,
     });
   });
 });
