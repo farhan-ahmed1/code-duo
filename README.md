@@ -147,10 +147,6 @@ Required GitHub environment variables:
 - `RAILWAY_SERVICE`
 - `RAILWAY_PUBLIC_URL`
 
-Optional GitHub environment variables:
-
-- `RAILWAY_PROJECT_ID` for stricter Railway CLI targeting in CI. When set, the deploy workflow links the project before validating service access and also passes the project ID to `railway up`.
-
 The workflow:
 
 1. Re-runs CI via the shared workflow.
