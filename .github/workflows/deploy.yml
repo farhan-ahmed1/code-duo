@@ -80,20 +80,37 @@ jobs:
           test -n "${{ vars.RAILWAY_SERVICE }}" || { echo "Missing RAILWAY_SERVICE variable"; exit 1; }
           test -n "${{ vars.RAILWAY_PUBLIC_URL }}" || { echo "Missing RAILWAY_PUBLIC_URL variable"; exit 1; }
 
-          railway service status \
-            --service "${{ vars.RAILWAY_SERVICE }}" \
-            --environment "${{ needs.resolve_target.outputs.environment }}" \
-            --json >/dev/null
+          if [[ -n "${{ vars.RAILWAY_PROJECT_ID }}" ]]; then
+            railway link \
+              --project "${{ vars.RAILWAY_PROJECT_ID }}" \
+              --environment "${{ needs.resolve_target.outputs.environment }}" \
+              --service "${{ vars.RAILWAY_SERVICE }}" >/dev/null
+
+            railway service status \
+              --service "${{ vars.RAILWAY_SERVICE }}" \
+              --environment "${{ needs.resolve_target.outputs.environment }}" \
+              --json >/dev/null
+          else
+            echo "Skipping Railway service preflight because RAILWAY_PROJECT_ID is not configured."
+          fi
 
       - name: Deploy server
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_NO_TELEMETRY: 1
         run: |
-          railway up \
-            --service "${{ vars.RAILWAY_SERVICE }}" \
-            --environment "${{ needs.resolve_target.outputs.environment }}" \
-            --detach \
+          railway_args=(
+            --service "${{ vars.RAILWAY_SERVICE }}"
+            --environment "${{ needs.resolve_target.outputs.environment }}"
+            --detach
             --yes
+          )
+
+          if [[ -n "${{ vars.RAILWAY_PROJECT_ID }}" ]]; then
+            railway_args+=(--project "${{ vars.RAILWAY_PROJECT_ID }}")
+          fi
+
+          railway up "${railway_args[@]}"
 
       - name: Wait for Railway health check
         run: |
