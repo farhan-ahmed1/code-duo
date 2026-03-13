@@ -2,6 +2,9 @@ import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
+const PRESENCE_NAME_KEY = "code-duo:username";
+const PRESENCE_ID_KEY = "code-duo:userid";
+const PRESENCE_CUSTOMISED_KEY = "code-duo:name-customised";
 let roomCreationRequestCount = 0;
 
 function nextTestClientIp() {
@@ -76,6 +79,41 @@ async function openCreateRoomDialog(page: Page) {
     .first()
     .click();
   await page.waitForSelector('[role="dialog"]', { timeout: 5_000 });
+}
+
+async function seedPresenceIdentity(
+  context: BrowserContext,
+  { id, name }: { id: string; name: string },
+) {
+  await context.addInitScript(
+    ({ userId, userName, nameKey, idKey, customisedKey }) => {
+      window.localStorage.setItem(nameKey, userName);
+      window.localStorage.setItem(idKey, userId);
+      window.localStorage.setItem(customisedKey, "true");
+    },
+    {
+      userId: id,
+      userName: name,
+      nameKey: PRESENCE_NAME_KEY,
+      idKey: PRESENCE_ID_KEY,
+      customisedKey: PRESENCE_CUSTOMISED_KEY,
+    },
+  );
+}
+
+async function getPresenceRoster(page: Page): Promise<string> {
+  const names = await page.locator('[data-testid="presence-user"]').evaluateAll(
+    (nodes) =>
+      nodes
+        .map((node) => {
+          const text = node.textContent?.replace(/\s+/g, " ").trim() ?? "";
+          return text.endsWith("you") ? text.slice(0, -3).trim() : text;
+        })
+        .filter((name): name is string => Boolean(name))
+        .sort(),
+  );
+
+  return names.join("|");
 }
 
 // ---------------------------------------------------------------------------
@@ -310,29 +348,113 @@ test.describe("Real-time collaboration", () => {
     await contextB.close();
   });
 
-  test("presence bar shows connected users", async ({ browser }) => {
+  test("presence bar shows named collaborators and removes them after disconnect", async ({ browser }) => {
     const roomId = await createRoom("Presence Room");
     const roomUrl = `${BASE_URL}/room/${roomId}`;
 
     const contextA = await browser.newContext();
     const contextB = await browser.newContext();
+
+    await seedPresenceIdentity(contextA, {
+      id: "presence-alice",
+      name: "Alice",
+    });
+    await seedPresenceIdentity(contextB, {
+      id: "presence-bob",
+      name: "Bob",
+    });
+
     const pageA = await contextA.newPage();
     const pageB = await contextB.newPage();
 
-    await pageA.goto(roomUrl);
-    await pageB.goto(roomUrl);
-    await waitForEditor(pageA);
-    await waitForEditor(pageB);
+    try {
+      await pageA.goto(roomUrl);
+      await pageB.goto(roomUrl);
+      await waitForEditor(pageA);
+      await waitForEditor(pageB);
 
-    // Both users should appear in each other's presence bars
-    const presenceUsers = pageA.locator('[data-testid="presence-user"]');
-    await expect(presenceUsers).toHaveCount(2, { timeout: 10_000 });
+      await expect
+        .poll(() => getPresenceRoster(pageA), { timeout: 10_000 })
+        .toBe("Alice|Bob");
+      await expect
+        .poll(() => getPresenceRoster(pageB), { timeout: 10_000 })
+        .toBe("Alice|Bob");
 
-    // After B disconnects, A should see only 1 user
-    await contextB.close();
-    await expect(presenceUsers).toHaveCount(1, { timeout: 10_000 });
+      await contextB.close();
 
-    await contextA.close();
+      await expect
+        .poll(() => getPresenceRoster(pageA), { timeout: 10_000 })
+        .toBe("Alice");
+    } finally {
+      await contextA.close();
+    }
+  });
+
+  test("presence bar restores a reconnecting collaborator without ghost duplicates", async ({
+    browser,
+  }) => {
+    const roomId = await createRoom("Presence Reconnect Room");
+    const roomUrl = `${BASE_URL}/room/${roomId}`;
+
+    const contextA = await browser.newContext();
+    const contextB = await browser.newContext();
+
+    await seedPresenceIdentity(contextA, {
+      id: "presence-alice-reconnect",
+      name: "Alice",
+    });
+    await seedPresenceIdentity(contextB, {
+      id: "presence-bob-reconnect",
+      name: "Bob",
+    });
+
+    const pageA = await contextA.newPage();
+    const pageB = await contextB.newPage();
+
+    let reconnectContext: BrowserContext | null = null;
+
+    try {
+      await pageA.goto(roomUrl);
+      await pageB.goto(roomUrl);
+      await waitForEditor(pageA);
+      await waitForEditor(pageB);
+
+      await expect
+        .poll(() => getPresenceRoster(pageA), { timeout: 10_000 })
+        .toBe("Alice|Bob");
+
+      await contextB.close();
+
+      await expect
+        .poll(() => getPresenceRoster(pageA), { timeout: 10_000 })
+        .toBe("Alice");
+
+      reconnectContext = await browser.newContext();
+      await seedPresenceIdentity(reconnectContext, {
+        id: "presence-bob-reconnect",
+        name: "Bob",
+      });
+
+      const reconnectPage = await reconnectContext.newPage();
+      await reconnectPage.goto(roomUrl);
+      await waitForEditor(reconnectPage);
+
+      await expect
+        .poll(() => getPresenceRoster(pageA), { timeout: 10_000 })
+        .toBe("Alice|Bob");
+      await expect
+        .poll(() => getPresenceRoster(reconnectPage), { timeout: 10_000 })
+        .toBe("Alice|Bob");
+
+      await expect(
+        pageA.locator('[data-testid="presence-user"]').filter({ hasText: "Bob" }),
+      ).toHaveCount(1);
+    } finally {
+      if (reconnectContext) {
+        await reconnectContext.close();
+      }
+      await contextA.close();
+    }
   });
 
   test("language change syncs across users", async ({ browser }) => {
