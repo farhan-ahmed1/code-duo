@@ -1,69 +1,179 @@
 # Code Duo
 
-> Real-time collaborative code editing, powered by CRDTs.
+> Code together, conflict-free.
 
 [![CI](https://github.com/farhan-ahmed1/code-duo/actions/workflows/ci.yml/badge.svg)](https://github.com/farhan-ahmed1/code-duo/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/farhan-ahmed1/code-duo/graph/badge.svg)](https://codecov.io/gh/farhan-ahmed1/code-duo)
 ![GitHub last commit](https://img.shields.io/github/last-commit/farhan-ahmed1/code-duo)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-<!-- Replace with: ![Code Duo demo](public/demo.gif) once recorded -->
+Real-time collaborative coding for serious software work. Open a room, share the link, and start editing together instantly with live cursors, synced language settings, offline resilience, and CRDT-backed convergence.
 
----
+![Code Duo landing page](docs/assets/readme/code-duo-landing.png)
 
-Multiple users open the same room URL and their keystrokes appear on each other's screens in milliseconds. No refresh. No conflicts. Edits survive a network drop and sync automatically when the connection comes back.
+Code Duo is a browser-first collaborative code editor built as a polished portfolio project and product MVP. It combines a fast developer workflow with production-minded engineering: Yjs-powered conflict-free editing, Monaco Editor, a typed Hono API, persistent SQLite room state, WebSocket sync, metrics, logging, and deployment automation.
 
-Built with **Yjs** (CRDT), **Monaco Editor** (the VS Code engine), **Next.js**, and a **Hono + WebSocket** backend.
+## Why It Matters
 
----
+- Open a room in seconds instead of coordinating local editor plugins or heavyweight cloud IDE setup.
+- Keep multiple collaborators in the same document without server-side merge arbitration.
+- Recover cleanly from network interruptions with IndexedDB-backed offline state.
+- Demonstrate product thinking, engineering rigor, and deployment readiness in one repository.
 
-## Features
+## Feature Highlights
 
-| Feature                       | Description                                                                                                                                        |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Zero-conflict editing**     | CRDTs mathematically guarantee that concurrent edits from any number of users always converge to the same document — no server arbitration needed. |
-| **Live cursors & presence**   | See every connected user's cursor position and name in real time. Each user gets a unique colour.                                                  |
-| **Offline-first**             | Keep editing with no connection. Changes persist locally via IndexedDB and merge automatically when the network returns.                           |
-| **Synced language switching** | Changing the editor language in one tab updates syntax highlighting for every connected user instantly.                                            |
-| **Persistent rooms**          | Documents survive server restarts. SQLite stores the full Yjs state as a compact binary blob.                                                      |
-| **Connection status**         | Clear UI feedback for `connected`, `connecting`, and `disconnected` states.                                                                        |
-| **Production-ready backend**  | Rate limiting, input validation, Prometheus metrics at `/metrics`, and structured Pino logging.                                                    |
+| Area                | What ships today                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| Real-time editing   | Concurrent edits converge through Yjs CRDTs with no merge-conflict drama during live collaboration      |
+| Presence            | Live cursors, participant names, and room awareness update in real time                                 |
+| Developer workflow  | Monaco-powered editing, shared language switching, keyboard shortcuts, and responsive presence UI       |
+| Resilience          | Local IndexedDB cache keeps documents interactive during disconnects and re-syncs automatically         |
+| Persistence         | Room metadata and Yjs snapshots are stored in SQLite so sessions survive server restarts                |
+| Operational quality | Rate limiting, validation, structured logging, health checks, Prometheus metrics, and CI/CD deploy flow |
 
----
+## Stack
 
-## Tech stack
+| Layer               | Technology                              | Role                                                         |
+| ------------------- | --------------------------------------- | ------------------------------------------------------------ |
+| Web app             | Next.js 16 + React 18 + Tailwind        | Browser-first product UI and room flows                      |
+| Editor              | Monaco Editor                           | Familiar VS Code-grade editing experience                    |
+| Collaboration       | Yjs, y-websocket, y-indexeddb, y-monaco | Conflict-free sync, transport, offline cache, editor binding |
+| API and sync server | Hono + ws                               | REST endpoints, health checks, metrics, and WebSocket relay  |
+| Persistence         | SQLite via better-sqlite3               | Room metadata and document snapshot storage                  |
+| Monorepo tooling    | pnpm workspaces + Turborepo             | Shared scripts, packages, and incremental tasks              |
+| Hosting             | Railway + Vercel                        | Backend and frontend deployment targets                      |
 
-| Layer          | Technology                  | Why                                                                                                                |
-| -------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Frontend       | Next.js 14 (App Router)     | File-based routing and first-class TypeScript support                                                              |
-| Code editor    | Monaco Editor               | The VS Code engine — familiar shortcuts, built-in language services for 20+ languages                              |
-| CRDT library   | Yjs                         | Mature ecosystem (`y-websocket`, `y-indexeddb`, `y-monaco`) with the lowest overhead for sequential-text use cases |
-| WebSocket sync | y-websocket                 | First-party Yjs provider with built-in reconnection and exponential backoff                                        |
-| Offline sync   | y-indexeddb                 | Mirrors the document to IndexedDB so the editor is interactive before the WebSocket connects                       |
-| HTTP framework | Hono                        | Lightweight and fully typed; WebSocket server shares the same `http.Server`                                        |
-| Database       | SQLite via better-sqlite3   | Zero-configuration — the entire database is a single file in a Docker volume                                       |
-| Monorepo       | Turborepo + pnpm workspaces | Shared `tsconfig`, unified scripts, fast incremental builds                                                        |
+## Quickstart
 
----
+### Prerequisites
 
-## Run it locally
+- Node.js 20+
+- pnpm 9+
+- Docker Desktop optional, for containerized local runs
+
+### Local development
+
+The web app defaults to `http://localhost:4000` and `ws://localhost:4000`, so a fresh clone works without extra environment setup.
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Frontend → [http://localhost:3000] · Backend → [http://localhost:4000]
+Apps:
 
-Or run the full production stack with Docker:
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:4000`
+- Backend health check: `http://localhost:4000/api/health`
+- Prometheus metrics: `http://localhost:4000/metrics`
+
+### Quick verification
+
+1. Open `http://localhost:3000`.
+2. Create a room.
+3. Open the same room URL in a second tab or browser.
+4. Type in one editor and confirm the other updates in real time.
+
+### Run with Docker
 
 ```bash
-docker compose up
+docker compose up --build
 ```
 
----
+This starts:
 
-## Architecture overview
+- `web` on port `3000`
+- `server` on port `4000`
+- A persistent Docker volume for SQLite-backed room data
+
+## Testing
+
+### Core quality gates
+
+```bash
+pnpm lint
+pnpm build
+pnpm test:unit
+```
+
+### End-to-end coverage
+
+```bash
+# Default browser matrix
+pnpm test:e2e
+
+# Explicit cross-browser run from the web app package
+pnpm test:e2e:cross-browser
+
+# Opt-in suites
+pnpm test:e2e:stress
+pnpm test:e2e:benchmark
+```
+
+### Package-specific commands
+
+```bash
+pnpm --filter @code-duo/server test:unit
+pnpm --filter @code-duo/web test:unit
+pnpm --filter @code-duo/server test:ws
+```
+
+## Deployment
+
+### Production shape
+
+- Frontend deploys to Vercel.
+- Backend deploys to Railway.
+- GitHub Actions gates deploys through CI before promoting changes.
+
+### GitHub Actions deploy flow
+
+The repository includes `.github/workflows/deploy.yml` for staged deploy automation.
+
+| Environment  | Platform         | Trigger                    |
+| ------------ | ---------------- | -------------------------- |
+| `production` | Railway + Vercel | Push to `main`             |
+| `staging`    | Railway + Vercel | Manual `workflow_dispatch` |
+
+Required GitHub environment secrets:
+
+- `RAILWAY_TOKEN`
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+Required GitHub environment variables:
+
+- `RAILWAY_SERVICE`
+- `RAILWAY_PUBLIC_URL`
+
+The workflow:
+
+1. Re-runs CI via the shared workflow.
+2. Deploys the Railway backend and waits for `/api/health` to report healthy.
+3. Deploys the Vercel frontend.
+4. Runs a deployed Playwright smoke test to confirm room creation and collaboration still work.
+
+### Railway backend
+
+The backend uses `railway.toml` plus the server Dockerfile. Configure these values in Railway:
+
+| Variable   | Value        |
+| ---------- | ------------ |
+| `PORT`     | `4000`       |
+| `DATA_DIR` | `/app/data`  |
+| `NODE_ENV` | `production` |
+
+### Vercel frontend
+
+Configure these environment variables in Vercel:
+
+| Variable              | Value                           |
+| --------------------- | ------------------------------- |
+| `NEXT_PUBLIC_WS_URL`  | `wss://<your-railway-domain>`   |
+| `NEXT_PUBLIC_API_URL` | `https://<your-railway-domain>` |
+
+## Architecture At A Glance
 
 ```mermaid
 graph TD
@@ -95,100 +205,38 @@ graph TD
     YB <-->|y-websocket| WS
 ```
 
-A keystroke in Browser A is converted by `y-monaco` into a Yjs update — a binary-encoded operation tagged with a unique `clientID + clock`. The server relays it to every other client. Each client applies it locally; no server-side merge logic exists. If Browser B was offline and made concurrent edits, Yjs's CRDT merges both sets of operations deterministically when the connection is restored.
+Code Duo treats collaboration as a product reliability problem, not just a transport problem. Browser clients edit local Yjs documents, sync through WebSockets, persist local state in IndexedDB, and hydrate durable room state from SQLite-backed snapshots on the server.
 
----
+## Repository Layout
 
-## Testing
-
-```bash
-# Unit tests (all packages)
-pnpm test:unit
-
-# Default E2E regression suite (Chromium + Firefox + WebKit)
-pnpm test:e2e
-
-# Cross-browser E2E (same suite, scoped directly to the web app)
-pnpm test:e2e:cross-browser
-
-# Stress tests (5+ concurrent users, network interruptions; opt-in)
-pnpm test:e2e:stress
-
-# Performance benchmarks (edit latency & document load time; opt-in)
-pnpm test:e2e:benchmark
+```text
+apps/
+  server/   Hono API, WebSocket relay, persistence, metrics, tests
+  web/      Next.js product UI, landing page, room experience, Playwright
+packages/
+  shared/   Shared types, constants, and cross-package utilities
+docs/       Architecture, API, ADRs, UX, and product documentation
+agency/     Planning, strategy, sprint, and brand artifacts
 ```
 
----
+## Supporting Docs
 
-## Deploy
+- [docs/architecture.md](docs/architecture.md) for system design, persistence, scaling, and request flow
+- [docs/API.md](docs/API.md) for REST endpoints, health checks, metrics, and protocol details
+- [docs/crdt-explainer.md](docs/crdt-explainer.md) for the Yjs model and CRDT background
+- [docs/adrs/README.md](docs/adrs/README.md) for architecture decisions and trade-offs
+- [docs/ux-architecture.md](docs/ux-architecture.md) for product UX structure and interaction direction
+- [agency/07-BRAND-IDENTITY-SYSTEM.md](agency/07-BRAND-IDENTITY-SYSTEM.md) for positioning, messaging, and visual system
 
-### Automated Deploys via GitHub Actions
+## Contributing
 
-The repo now includes [.github/workflows/deploy.yml](.github/workflows/deploy.yml), which reuses the CI workflow and then deploys:
+Contributions are welcome if they keep the product precise, reliable, and developer-native.
 
-| Target       | Platform         | Trigger                    |
-| ------------ | ---------------- | -------------------------- |
-| `production` | Railway + Vercel | Push to `main`             |
-| `staging`    | Railway + Vercel | Manual `workflow_dispatch` |
+1. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+2. Keep changes scoped and document any product or architecture trade-offs.
+3. Run the relevant lint, build, unit, and end-to-end checks before submitting.
+4. Update docs when behavior, API shape, UX copy, or deployment flow changes.
 
-The workflow expects two GitHub Environments named `staging` and `production`. Each environment must define these secrets:
+## License
 
-| Secret              | Purpose                                    |
-| ------------------- | ------------------------------------------ |
-| `RAILWAY_TOKEN`     | Railway project token used by `railway up` |
-| `VERCEL_TOKEN`      | Vercel access token for CLI deploys        |
-| `VERCEL_ORG_ID`     | Vercel org/team id                         |
-| `VERCEL_PROJECT_ID` | Vercel project id for `apps/web`           |
-
-Each GitHub Environment must also define these variables:
-
-| Variable             | Example                                  | Purpose                                                        |
-| -------------------- | ---------------------------------------- | -------------------------------------------------------------- |
-| `RAILWAY_SERVICE`    | `server`                                 | Railway service name or id to deploy                           |
-| `RAILWAY_PUBLIC_URL` | `https://code-duo-server.up.railway.app` | Public backend base URL used for health checks and smoke tests |
-
-The workflow verifies the deployment in three stages:
-
-1. It re-runs CI through the reusable [ci.yml](.github/workflows/ci.yml) workflow.
-2. It deploys the Railway backend, waits for `/api/health` to report `healthy`, then deploys the Vercel frontend.
-3. It runs a Chromium Playwright smoke test against the live Vercel URL and Railway API to confirm room creation and live collaboration still work after deploy.
-
-### Backend → Railway
-
-The repo includes a `railway.toml` that builds from the server Dockerfile. Create a new Railway project, link the repo, and set these environment variables:
-
-| Variable   | Value        |
-| ---------- | ------------ |
-| `PORT`     | `4000`       |
-| `DATA_DIR` | `/app/data`  |
-| `NODE_ENV` | `production` |
-
-Railway provisions a persistent volume automatically when `DATA_DIR` is used. The health check at `/api/health` verifies the deploy.
-
-### Frontend → Vercel
-
-Import the repo into Vercel. The `vercel.json` in the root configures the build. Set these environment variables in the Vercel dashboard:
-
-| Variable              | Value                           |
-| --------------------- | ------------------------------- |
-| `NEXT_PUBLIC_WS_URL`  | `wss://<your-railway-domain>`   |
-| `NEXT_PUBLIC_API_URL` | `https://<your-railway-domain>` |
-
-After deploying both, verify:
-
-1. Open your Vercel URL → create a room
-2. Copy the room link → open in a second device/browser
-3. Type in one tab → edits appear in the other
-
-If you want GitHub Actions to own deploys completely, mirror the same Vercel and Railway environment configuration in both `staging` and `production` before enabling the workflow.
-
----
-
-## Docs
-
-- [Architecture](docs/architecture.md) — data flow, concurrency model, persistence, scaling considerations, and technology decisions
-- [Architecture Decision Records](docs/adrs/README.md) — formal decisions with context, alternatives, rationale, and accepted trade-offs
-- [CRDT Explainer](docs/crdt-explainer.md) — how Yjs works internally, CRDTs vs. OT, and common interview questions
-- [API Reference](docs/API.md) — REST endpoints, WebSocket protocol, and error codes
-
----
+Released under the [MIT License](LICENSE).
