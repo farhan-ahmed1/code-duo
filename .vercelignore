@@ -1,0 +1,16 @@
+.git/
+.github/
+.turbo/
+.next/
+**/.next/
+node_modules/
+**/node_modules/
+coverage/
+**/coverage/
+playwright-report/
+**/playwright-report/
+test-results/
+**/test-results/
+apps/server/
+agency/
+docs/

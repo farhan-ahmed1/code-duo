@@ -3,6 +3,7 @@ import { RoomStore } from "../persistence/room-store";
 import { DEFAULT_LANGUAGE, DEFAULT_PAGINATION_LIMIT } from "@code-duo/shared";
 import { roomCreationRateLimit } from "./rate-limiter";
 import { validateRoomName, validateLanguage } from "./validation";
+import { ERROR_CODES, apiError } from "./errors";
 import { logger } from "../utils/logger";
 import {
   metricsRegistry,
@@ -33,20 +34,23 @@ apiRouter.post("/rooms", roomCreationRateLimit, async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: "Invalid JSON body" }, 400);
+    return c.json(
+      apiError("Invalid JSON body", ERROR_CODES.INVALID_JSON_BODY),
+      400,
+    );
   }
 
   // Validate room name
   const nameResult = validateRoomName(body.name);
   if (!nameResult.valid) {
-    return c.json({ error: nameResult.error }, 400);
+    return c.json(apiError(nameResult.error!, nameResult.code!), 400);
   }
   const name = nameResult.sanitized || "My Room";
 
   // Validate language
   const langResult = validateLanguage(body.language);
   if (!langResult.valid) {
-    return c.json({ error: langResult.error }, 400);
+    return c.json(apiError(langResult.error!, langResult.code!), 400);
   }
   const language = langResult.language ?? DEFAULT_LANGUAGE;
 
@@ -63,7 +67,9 @@ apiRouter.post("/rooms", roomCreationRateLimit, async (c) => {
 /** GET /api/rooms/:id — get room metadata */
 apiRouter.get("/rooms/:id", (c) => {
   const room = roomStore.getRoom(c.req.param("id"));
-  if (!room) return c.json({ error: "Room not found" }, 404);
+  if (!room) {
+    return c.json(apiError("Room not found", ERROR_CODES.ROOM_NOT_FOUND), 404);
+  }
   return c.json({
     ...room,
     activeUserCount: getRoomConnectionCount(room.id),
@@ -129,7 +135,13 @@ apiRouter.get("/health", (c) => {
  */
 apiRouter.get("/health/ready", (c) => {
   if (!serverReady) {
-    return c.json({ ready: false }, 503);
+    return c.json(
+      {
+        ...apiError("Server is not ready", ERROR_CODES.SERVER_NOT_READY),
+        ready: false,
+      },
+      503,
+    );
   }
   return c.json({ ready: true, uptime: Math.floor(process.uptime()) });
 });

@@ -2,6 +2,7 @@ import { MiddlewareHandler, ErrorHandler } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "../utils/logger";
 import { httpRequestDuration } from "../utils/metrics";
+import { ERROR_CODES, apiError } from "./errors";
 
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGIN ?? "http://localhost:3000")
   .split(",")
@@ -51,5 +52,8 @@ export const errorHandler: ErrorHandler = (err, c) => {
     { err, path: c.req.path, method: c.req.method, event: "unhandled_error" },
     "Unhandled error",
   );
-  return c.json({ error: "Internal server error" }, 500);
+  return c.json(
+    apiError("Internal server error", ERROR_CODES.INTERNAL_SERVER_ERROR),
+    500,
+  );
 };

@@ -1,6 +1,7 @@
 import { MiddlewareHandler } from "hono";
 import { SUPPORTED_LANGUAGES, MAX_ROOM_NAME_LENGTH } from "@code-duo/shared";
 import type { EditorLanguage } from "@code-duo/shared";
+import { ERROR_CODES, apiError, type ApiErrorCode } from "./errors";
 
 // ── Constants ──────────────────────────────────────────────────────
 
@@ -32,11 +33,17 @@ export interface RoomNameValidation {
   valid: boolean;
   sanitized: string;
   error?: string;
+  code?: ApiErrorCode;
 }
 
 export function validateRoomName(name: unknown): RoomNameValidation {
   if (typeof name !== "string" && name !== undefined && name !== null) {
-    return { valid: false, sanitized: "", error: "Room name must be a string" };
+    return {
+      valid: false,
+      sanitized: "",
+      error: "Room name must be a string",
+      code: ERROR_CODES.ROOM_NAME_INVALID_TYPE,
+    };
   }
 
   const raw = typeof name === "string" ? name : "";
@@ -47,6 +54,7 @@ export function validateRoomName(name: unknown): RoomNameValidation {
       valid: false,
       sanitized: sanitized.slice(0, MAX_ROOM_NAME_LENGTH),
       error: `Room name must be ${MAX_ROOM_NAME_LENGTH} characters or fewer`,
+      code: ERROR_CODES.ROOM_NAME_TOO_LONG,
     };
   }
 
@@ -61,6 +69,7 @@ export function validateRoomName(name: unknown): RoomNameValidation {
       sanitized,
       error:
         "Room name may only contain letters, numbers, spaces, and common punctuation (- . , ! ? ' \" ( ) & + # @ : ; /)",
+      code: ERROR_CODES.ROOM_NAME_INVALID_CHARACTERS,
     };
   }
 
@@ -71,6 +80,7 @@ export interface LanguageValidation {
   valid: boolean;
   language: EditorLanguage | null;
   error?: string;
+  code?: ApiErrorCode;
 }
 
 export function validateLanguage(lang: unknown): LanguageValidation {
@@ -83,6 +93,7 @@ export function validateLanguage(lang: unknown): LanguageValidation {
       valid: false,
       language: null,
       error: "Language must be a string",
+      code: ERROR_CODES.LANGUAGE_INVALID_TYPE,
     };
   }
 
@@ -91,6 +102,7 @@ export function validateLanguage(lang: unknown): LanguageValidation {
       valid: false,
       language: null,
       error: `Unsupported language "${lang}". Must be one of: ${SUPPORTED_LANGUAGES.join(", ")}`,
+      code: ERROR_CODES.LANGUAGE_UNSUPPORTED,
     };
   }
 
@@ -112,9 +124,10 @@ export const bodySizeLimit: MiddlewareHandler = async (c, next) => {
   const contentLength = c.req.header("content-length");
   if (contentLength && Number(contentLength) > MAX_BODY_SIZE) {
     return c.json(
-      {
-        error: `Request body too large. Maximum size is ${MAX_BODY_SIZE} bytes.`,
-      },
+      apiError(
+        `Request body too large. Maximum size is ${MAX_BODY_SIZE} bytes.`,
+        ERROR_CODES.REQUEST_BODY_TOO_LARGE,
+      ),
       413,
     );
   }
@@ -124,9 +137,10 @@ export const bodySizeLimit: MiddlewareHandler = async (c, next) => {
     const buffer = await clonedRequest.arrayBuffer();
     if (buffer.byteLength > MAX_BODY_SIZE) {
       return c.json(
-        {
-          error: `Request body too large. Maximum size is ${MAX_BODY_SIZE} bytes.`,
-        },
+        apiError(
+          `Request body too large. Maximum size is ${MAX_BODY_SIZE} bytes.`,
+          ERROR_CODES.REQUEST_BODY_TOO_LARGE,
+        ),
         413,
       );
     }

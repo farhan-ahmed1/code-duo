@@ -2,6 +2,9 @@ import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
+const PRESENCE_NAME_KEY = "code-duo:username";
+const PRESENCE_ID_KEY = "code-duo:userid";
+const PRESENCE_CUSTOMISED_KEY = "code-duo:name-customised";
 let roomCreationRequestCount = 0;
 
 function nextTestClientIp() {
@@ -37,12 +40,12 @@ async function waitForEditor(page: Page) {
   await page.waitForTimeout(500);
 }
 
-/** Focus Monaco and insert text atomically.
+/** Focus Monaco and insert text.
  *
- *  Uses `keyboard.insertText()` rather than `keyboard.type()` so the entire
- *  string is delivered as a single InputEvent.  This is reliable across all
- *  browsers (WebKit in particular drops individual key events sent to Monaco
- *  under load).
+ *  Tries `keyboard.insertText()` first (atomic, reliable in WebKit).
+ *  If the text doesn't appear in the editor within 1 s — which happens on
+ *  Firefox where `insertText` can be silently swallowed by Monaco — falls
+ *  back to `keyboard.type()` with a small inter-key delay.
  */
 async function typeInEditor(page: Page, text: string) {
   await page.click(".monaco-editor .view-lines");
@@ -50,6 +53,36 @@ async function typeInEditor(page: Page, text: string) {
   await page.keyboard.press("End"); // move to end of line
   await page.keyboard.insertText(text);
   await page.keyboard.press("Escape"); // dismiss autocomplete
+
+  // Self-check: verify text actually reached the Monaco model.
+  // On Firefox, insertText can be swallowed — fall back to type().
+  const landed = await page
+    .waitForFunction(
+      (expected: string) => {
+        const w = window as unknown as {
+          __codeDuoGetEditorValue?: () => string;
+          monaco?: { editor?: { getModels?: () => Array<{ getValue(): string }> } };
+        };
+        const val =
+          w.__codeDuoGetEditorValue?.() ??
+          w.monaco?.editor?.getModels?.()?.[0]?.getValue() ??
+          "";
+        return val.includes(expected);
+      },
+      text,
+      { timeout: 1_500 },
+    )
+    .then(() => true)
+    .catch(() => false);
+
+  if (!landed) {
+    // Clear any partial state and retry with keyboard.type()
+    await page.click(".monaco-editor .view-lines");
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("End");
+    await page.keyboard.type(text, { delay: 20 });
+    await page.keyboard.press("Escape");
+  }
 }
 
 /** Return the full plain-text content currently visible in Monaco.
@@ -76,6 +109,41 @@ async function openCreateRoomDialog(page: Page) {
     .first()
     .click();
   await page.waitForSelector('[role="dialog"]', { timeout: 5_000 });
+}
+
+async function seedPresenceIdentity(
+  context: BrowserContext,
+  { id, name }: { id: string; name: string },
+) {
+  await context.addInitScript(
+    ({ userId, userName, nameKey, idKey, customisedKey }) => {
+      window.localStorage.setItem(nameKey, userName);
+      window.localStorage.setItem(idKey, userId);
+      window.localStorage.setItem(customisedKey, "true");
+    },
+    {
+      userId: id,
+      userName: name,
+      nameKey: PRESENCE_NAME_KEY,
+      idKey: PRESENCE_ID_KEY,
+      customisedKey: PRESENCE_CUSTOMISED_KEY,
+    },
+  );
+}
+
+async function getPresenceRoster(page: Page): Promise<string> {
+  const names = await page.locator('[data-testid="presence-user"]').evaluateAll(
+    (nodes) =>
+      nodes
+        .map((node) => {
+          const text = node.textContent?.replace(/\s+/g, " ").trim() ?? "";
+          return text.endsWith("you") ? text.slice(0, -3).trim() : text;
+        })
+        .filter((name): name is string => Boolean(name))
+        .sort(),
+  );
+
+  return names.join("|");
 }
 
 // ---------------------------------------------------------------------------
@@ -310,29 +378,113 @@ test.describe("Real-time collaboration", () => {
     await contextB.close();
   });
 
-  test("presence bar shows connected users", async ({ browser }) => {
+  test("presence bar shows named collaborators and removes them after disconnect", async ({ browser }) => {
     const roomId = await createRoom("Presence Room");
     const roomUrl = `${BASE_URL}/room/${roomId}`;
 
     const contextA = await browser.newContext();
     const contextB = await browser.newContext();
+
+    await seedPresenceIdentity(contextA, {
+      id: "presence-alice",
+      name: "Alice",
+    });
+    await seedPresenceIdentity(contextB, {
+      id: "presence-bob",
+      name: "Bob",
+    });
+
     const pageA = await contextA.newPage();
     const pageB = await contextB.newPage();
 
-    await pageA.goto(roomUrl);
-    await pageB.goto(roomUrl);
-    await waitForEditor(pageA);
-    await waitForEditor(pageB);
+    try {
+      await pageA.goto(roomUrl);
+      await pageB.goto(roomUrl);
+      await waitForEditor(pageA);
+      await waitForEditor(pageB);
 
-    // Both users should appear in each other's presence bars
-    const presenceUsers = pageA.locator('[data-testid="presence-user"]');
-    await expect(presenceUsers).toHaveCount(2, { timeout: 10_000 });
+      await expect
+        .poll(() => getPresenceRoster(pageA), { timeout: 10_000 })
+        .toBe("Alice|Bob");
+      await expect
+        .poll(() => getPresenceRoster(pageB), { timeout: 10_000 })
+        .toBe("Alice|Bob");
 
-    // After B disconnects, A should see only 1 user
-    await contextB.close();
-    await expect(presenceUsers).toHaveCount(1, { timeout: 10_000 });
+      await contextB.close();
 
-    await contextA.close();
+      await expect
+        .poll(() => getPresenceRoster(pageA), { timeout: 10_000 })
+        .toBe("Alice");
+    } finally {
+      await contextA.close();
+    }
+  });
+
+  test("presence bar restores a reconnecting collaborator without ghost duplicates", async ({
+    browser,
+  }) => {
+    const roomId = await createRoom("Presence Reconnect Room");
+    const roomUrl = `${BASE_URL}/room/${roomId}`;
+
+    const contextA = await browser.newContext();
+    const contextB = await browser.newContext();
+
+    await seedPresenceIdentity(contextA, {
+      id: "presence-alice-reconnect",
+      name: "Alice",
+    });
+    await seedPresenceIdentity(contextB, {
+      id: "presence-bob-reconnect",
+      name: "Bob",
+    });
+
+    const pageA = await contextA.newPage();
+    const pageB = await contextB.newPage();
+
+    let reconnectContext: BrowserContext | null = null;
+
+    try {
+      await pageA.goto(roomUrl);
+      await pageB.goto(roomUrl);
+      await waitForEditor(pageA);
+      await waitForEditor(pageB);
+
+      await expect
+        .poll(() => getPresenceRoster(pageA), { timeout: 10_000 })
+        .toBe("Alice|Bob");
+
+      await contextB.close();
+
+      await expect
+        .poll(() => getPresenceRoster(pageA), { timeout: 10_000 })
+        .toBe("Alice");
+
+      reconnectContext = await browser.newContext();
+      await seedPresenceIdentity(reconnectContext, {
+        id: "presence-bob-reconnect",
+        name: "Bob",
+      });
+
+      const reconnectPage = await reconnectContext.newPage();
+      await reconnectPage.goto(roomUrl);
+      await waitForEditor(reconnectPage);
+
+      await expect
+        .poll(() => getPresenceRoster(pageA), { timeout: 10_000 })
+        .toBe("Alice|Bob");
+      await expect
+        .poll(() => getPresenceRoster(reconnectPage), { timeout: 10_000 })
+        .toBe("Alice|Bob");
+
+      await expect(
+        pageA.locator('[data-testid="presence-user"]').filter({ hasText: "Bob" }),
+      ).toHaveCount(1);
+    } finally {
+      if (reconnectContext) {
+        await reconnectContext.close();
+      }
+      await contextA.close();
+    }
   });
 
   test("language change syncs across users", async ({ browser }) => {
@@ -372,6 +524,11 @@ test.describe("Real-time collaboration", () => {
     await waitForEditor(page);
 
     await typeInEditor(page, "persistent content here");
+
+    // Confirm the text is in the local editor before proceeding
+    await expect
+      .poll(() => getEditorText(page), { timeout: 5_000 })
+      .toContain("persistent content here");
 
     // Wait for debounced server-side save
     await page.waitForTimeout(3_000);

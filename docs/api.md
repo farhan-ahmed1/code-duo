@@ -290,18 +290,25 @@ The sync flow on connection:
 
 ### Reconnection
 
-The y-websocket provider handles reconnection automatically with exponential backoff. Code Duo configures it as follows:
+The y-websocket provider reconnects automatically. Code Duo currently passes these runtime options to the provider:
 
 ```typescript
-const WS_RECONNECT_CONFIG = {
-  maxBackoffTime: 2500, // ms — maximum delay between retries
-  initialReconnectDelay: 100, // ms — first retry delay
-  maxReconnectDelay: 30_000, // ms — hard ceiling on retry delay
-  bcChannelName: "code-duo", // BroadcastChannel name for cross-tab sync
-};
+const provider = new WebsocketProvider("ws://localhost:4000/yjs", roomId, ydoc, {
+  connect: true,
+  maxBackoffTime: 2500,
+  resyncInterval: 5000,
+});
 ```
 
-The `WebsocketProvider` also uses a **BroadcastChannel** to exchange updates between multiple tabs open on the same origin, so two tabs in the same browser share document state immediately without round-tripping to the server.
+Operationally, that means:
+
+1. The client begins reconnect attempts automatically after a disconnect.
+2. Retry delays use y-websocket's built-in exponential backoff, capped at `2500 ms` between attempts.
+3. Once reconnected, the provider resynchronises state and also performs a periodic full resync every `5 seconds` while connected.
+4. While disconnected, the editor remains usable because updates are buffered locally in the Yjs document and persisted in IndexedDB.
+5. When the socket reconnects, local changes, IndexedDB state, and the server snapshot are merged by Yjs.
+
+The provider also uses browser-local cross-tab coordination, so multiple tabs on the same origin can exchange updates without waiting for a server round trip.
 
 ### Persistence Lifecycle
 
@@ -444,20 +451,44 @@ paths:
 
 ## Error Responses
 
-All error responses use the following JSON structure:
+All JSON error responses now use the following structure:
 
 ```json
-{ "error": "Human-readable error message" }
+{
+  "error": "Human-readable error message",
+  "code": "MACHINE_READABLE_ERROR_CODE"
+}
 ```
 
-| Status                      | When                                                                                                                 |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `400 Bad Request`           | Invalid JSON body, invalid `name` (unsupported characters, too long), invalid `language` (not in the supported list) |
-| `404 Not Found`             | Room ID does not exist (`GET /api/rooms/:id`)                                                                        |
-| `413 Content Too Large`     | Request body exceeds 64 KB                                                                                           |
-| `429 Too Many Requests`     | Rate limit exceeded. Includes a `Retry-After` header with the number of seconds to wait.                             |
-| `500 Internal Server Error` | Unhandled server exception                                                                                           |
-| `503 Service Unavailable`   | Server not yet ready (`GET /api/health/ready` only)                                                                  |
+Rate-limited responses also include `retryAfter` in the body and `Retry-After` in the response headers.
+
+### Error Code Catalog
+
+| HTTP Status | Error Code                     | Endpoint / Layer                | Meaning |
+| ----------- | ------------------------------ | ------------------------------- | ------- |
+| `400`       | `INVALID_JSON_BODY`            | `POST /api/rooms`               | The request body was not valid JSON. |
+| `400`       | `ROOM_NAME_INVALID_TYPE`       | `POST /api/rooms`               | `name` was present but not a string. |
+| `400`       | `ROOM_NAME_TOO_LONG`           | `POST /api/rooms`               | `name` exceeded 100 characters after sanitisation. |
+| `400`       | `ROOM_NAME_INVALID_CHARACTERS` | `POST /api/rooms`               | `name` contained characters outside the allowed punctuation set. |
+| `400`       | `LANGUAGE_INVALID_TYPE`        | `POST /api/rooms`               | `language` was present but not a string. |
+| `400`       | `LANGUAGE_UNSUPPORTED`         | `POST /api/rooms`               | `language` was not one of the supported Monaco language IDs. |
+| `404`       | `ROOM_NOT_FOUND`               | `GET /api/rooms/:id`            | The requested room row does not exist in SQLite. |
+| `413`       | `REQUEST_BODY_TOO_LARGE`       | `/api/*` middleware             | The request body exceeded `65536` bytes. |
+| `429`       | `RATE_LIMIT_API`               | Global `/api/*` limiter         | The caller exceeded the general API budget of 100 requests per IP per minute. |
+| `429`       | `RATE_LIMIT_ROOM_CREATION`     | `POST /api/rooms` route limiter | The caller exceeded the room-creation budget of 10 room creations per IP per hour. |
+| `500`       | `INTERNAL_SERVER_ERROR`        | Global error handler            | An unhandled server exception escaped the route or middleware stack. |
+| `503`       | `SERVER_NOT_READY`             | `GET /api/health/ready`         | The process has started but has not yet finished full initialisation. |
+
+### Failure-Path Semantics
+
+| Status                  | When |
+| ----------------------- | ---- |
+| `400 Bad Request`       | Validation or parsing failed for the request body. |
+| `404 Not Found`         | The room lookup endpoint was called with an unknown room ID. |
+| `413 Content Too Large` | Body-size middleware rejected the request before route handling. |
+| `429 Too Many Requests` | Either the global API limiter or the room-creation limiter rejected the request. Inspect `code` to tell which one fired. |
+| `500 Internal Server Error` | An unexpected exception occurred and was normalized by the Hono error handler. |
+| `503 Service Unavailable` | The readiness probe was called before server startup completed. |
 
 **Example 400:**
 
@@ -469,7 +500,8 @@ curl -X POST http://localhost:4000/api/rooms \
 
 ```json
 {
-  "error": "Room name may only contain letters, numbers, spaces, and common punctuation (- . , ! ? ' \" ( ) & + # @ : ; /)"
+  "error": "Room name may only contain letters, numbers, spaces, and common punctuation (- . , ! ? ' \" ( ) & + # @ : ; /)",
+  "code": "ROOM_NAME_INVALID_CHARACTERS"
 }
 ```
 
@@ -480,7 +512,21 @@ HTTP/1.1 429 Too Many Requests
 Retry-After: 42
 Content-Type: application/json
 
-{ "error": "Too many requests" }
+{
+  "error": "Too many requests. Please try again later.",
+  "code": "RATE_LIMIT_API",
+  "retryAfter": 42
+}
+```
+
+**Example 503:**
+
+```json
+{
+  "error": "Server is not ready",
+  "code": "SERVER_NOT_READY",
+  "ready": false
+}
 ```
 
 ---
@@ -507,6 +553,36 @@ These correspond directly to Monaco Editor language IDs.
 | All other `/api/*` endpoints | 100 requests per IP | 1 minute |
 
 Rate limiting uses an in-memory sliding-window counter. See [ARCHITECTURE.md](architecture.md#scaling-considerations) for details on the behaviour under horizontal scaling and the recommended Redis upgrade path.
+
+### Operator Notes
+
+1. `POST /api/rooms` passes through two independent limiters: the global API limiter first, then the route-specific room-creation limiter.
+2. A burst of general traffic can therefore return `RATE_LIMIT_API` before the request reaches the room-creation limiter.
+3. When a limiter fires, the response includes both a `Retry-After` header and a numeric `retryAfter` body field in seconds.
+4. `/metrics` is intentionally excluded from `/api/*` so Prometheus scraping is never throttled by the API limiter.
+5. Rate-limit state is process-local. In a horizontally scaled deployment, each instance tracks its own counters until the limiter is replaced with a shared backend such as Redis.
+
+## WebSocket Operator Semantics
+
+### Upgrade Handling
+
+1. The HTTP server only upgrades requests whose path starts with `/yjs/`.
+2. Any other attempted WebSocket upgrade is rejected by destroying the socket; there is no JSON error body for invalid upgrade paths.
+3. The server does not expose a separate rate limiter for WebSocket upgrades.
+
+### Room Resolution
+
+1. The WebSocket server derives the room ID from the last path segment in `/yjs/:roomId`.
+2. WebSocket connectivity itself does not validate the room via a REST lookup first.
+3. Code Duo's frontend validates room existence with `GET /api/rooms/:id` before navigating, which is the supported operator-facing flow.
+
+### Disconnect And Recovery Semantics
+
+1. On every successful connection, the server updates the room's `accessed_at` timestamp so active rooms are not purged by the seven-day cleanup job.
+2. The first active connection to a room restores the last persisted Yjs snapshot from SQLite.
+3. Incremental edits are debounced and flushed to SQLite every `2000 ms`.
+4. When the last client disconnects, the server immediately writes the final document state to SQLite.
+5. Client-visible connection states are `connecting`, `connected`, and `disconnected`; sync state is tracked separately as `syncing` or `synced`.
 
 ---
 
