@@ -1,0 +1,213 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment target
+        required: true
+        type: choice
+        default: staging
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'production' }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: 20
+
+jobs:
+  resolve_target:
+    name: Resolve Target
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.resolve.outputs.environment }}
+      vercel_target: ${{ steps.resolve.outputs.vercel_target }}
+      vercel_prod: ${{ steps.resolve.outputs.vercel_prod }}
+    steps:
+      - name: Resolve deployment environment
+        id: resolve
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            target="${{ inputs.environment }}"
+          else
+            target="production"
+          fi
+
+          echo "environment=$target" >> "$GITHUB_OUTPUT"
+          echo "vercel_target=$target" >> "$GITHUB_OUTPUT"
+
+          if [[ "$target" == "production" ]]; then
+            echo "vercel_prod=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "vercel_prod=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  ci:
+    name: Validate Before Deploy
+    needs: [resolve_target]
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  deploy_server:
+    name: Deploy Server to Railway
+    needs: [resolve_target, ci]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve_target.outputs.environment }}
+    outputs:
+      railway_public_url: ${{ steps.export.outputs.railway_public_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install --global @railway/cli
+
+      - name: Validate Railway environment configuration
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          test -n "$RAILWAY_TOKEN" || { echo "Missing RAILWAY_TOKEN secret"; exit 1; }
+          test -n "${{ vars.RAILWAY_SERVICE }}" || { echo "Missing RAILWAY_SERVICE variable"; exit 1; }
+          test -n "${{ vars.RAILWAY_PUBLIC_URL }}" || { echo "Missing RAILWAY_PUBLIC_URL variable"; exit 1; }
+
+          railway status \
+            --service "${{ vars.RAILWAY_SERVICE }}" \
+            --environment "${{ needs.resolve_target.outputs.environment }}" \
+            --json >/tmp/railway-status.json
+
+      - name: Deploy server
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up \
+            --service "${{ vars.RAILWAY_SERVICE }}" \
+            --environment "${{ needs.resolve_target.outputs.environment }}" \
+            --detach \
+            --yes
+
+      - name: Wait for Railway health check
+        run: |
+          endpoint="${{ vars.RAILWAY_PUBLIC_URL }}/api/health"
+          for attempt in {1..30}; do
+            response="$(curl -fsS "$endpoint" || true)"
+            if echo "$response" | grep -q '"status":"healthy"'; then
+              echo "Railway health check passed on attempt $attempt"
+              exit 0
+            fi
+
+            echo "Railway health check not ready yet (attempt $attempt/30)"
+            sleep 10
+          done
+
+          echo "Railway health check never reached healthy state"
+          exit 1
+
+      - name: Export Railway URL
+        id: export
+        run: echo "railway_public_url=${{ vars.RAILWAY_PUBLIC_URL }}" >> "$GITHUB_OUTPUT"
+
+  deploy_web:
+    name: Deploy Web to Vercel
+    needs: [resolve_target, deploy_server]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve_target.outputs.environment }}
+    outputs:
+      deployment_url: ${{ steps.deploy.outputs.deployment_url }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Validate Vercel environment configuration
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          test -n "$VERCEL_TOKEN" || { echo "Missing VERCEL_TOKEN secret"; exit 1; }
+          test -n "$VERCEL_ORG_ID" || { echo "Missing VERCEL_ORG_ID secret"; exit 1; }
+          test -n "$VERCEL_PROJECT_ID" || { echo "Missing VERCEL_PROJECT_ID secret"; exit 1; }
+
+      - name: Pull Vercel project settings
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          vercel pull \
+            --yes \
+            --environment="${{ needs.resolve_target.outputs.vercel_target }}" \
+            --cwd=apps/web \
+            --token="$VERCEL_TOKEN"
+
+      - name: Build Vercel artifacts
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [[ "${{ needs.resolve_target.outputs.vercel_prod }}" == "true" ]]; then
+            vercel build --prod --cwd=apps/web --token="$VERCEL_TOKEN"
+          else
+            vercel build \
+              --target="${{ needs.resolve_target.outputs.vercel_target }}" \
+              --cwd=apps/web \
+              --token="$VERCEL_TOKEN"
+          fi
+
+      - name: Deploy prebuilt Vercel artifacts
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [[ "${{ needs.resolve_target.outputs.vercel_prod }}" == "true" ]]; then
+            deployment_url="$(vercel deploy --prebuilt --prod --cwd=apps/web --token="$VERCEL_TOKEN")"
+          else
+            deployment_url="$(vercel deploy --prebuilt --target="${{ needs.resolve_target.outputs.vercel_target }}" --cwd=apps/web --token="$VERCEL_TOKEN")"
+          fi
+
+          echo "deployment_url=$deployment_url" >> "$GITHUB_OUTPUT"
+          echo "Deployed web to $deployment_url"
+
+  smoke_test:
+    name: Verify Live Deployment
+    needs: [resolve_target, deploy_server, deploy_web]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve_target.outputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: pnpm --filter @code-duo/web exec playwright install --with-deps chromium
+
+      - name: Verify Vercel root responds
+        run: curl -fsS "${{ needs.deploy_web.outputs.deployment_url }}" >/dev/null
+
+      - name: Run deployed smoke test
+        env:
+          CI: true
+          PLAYWRIGHT_BASE_URL: ${{ needs.deploy_web.outputs.deployment_url }}
+          API_URL: ${{ needs.deploy_server.outputs.railway_public_url }}
+          SKIP_PLAYWRIGHT_WEBSERVER: "1"
+        run: pnpm --filter @code-duo/web test:e2e:deployed

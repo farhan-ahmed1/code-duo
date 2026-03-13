@@ -122,6 +122,37 @@ pnpm test:e2e:benchmark
 
 ## Deploy
 
+### Automated Deploys via GitHub Actions
+
+The repo now includes [.github/workflows/deploy.yml](.github/workflows/deploy.yml), which reuses the CI workflow and then deploys:
+
+| Target       | Platform         | Trigger                    |
+| ------------ | ---------------- | -------------------------- |
+| `production` | Railway + Vercel | Push to `main`             |
+| `staging`    | Railway + Vercel | Manual `workflow_dispatch` |
+
+The workflow expects two GitHub Environments named `staging` and `production`. Each environment must define these secrets:
+
+| Secret              | Purpose                                    |
+| ------------------- | ------------------------------------------ |
+| `RAILWAY_TOKEN`     | Railway project token used by `railway up` |
+| `VERCEL_TOKEN`      | Vercel access token for CLI deploys        |
+| `VERCEL_ORG_ID`     | Vercel org/team id                         |
+| `VERCEL_PROJECT_ID` | Vercel project id for `apps/web`           |
+
+Each GitHub Environment must also define these variables:
+
+| Variable             | Example                                  | Purpose                                                        |
+| -------------------- | ---------------------------------------- | -------------------------------------------------------------- |
+| `RAILWAY_SERVICE`    | `server`                                 | Railway service name or id to deploy                           |
+| `RAILWAY_PUBLIC_URL` | `https://code-duo-server.up.railway.app` | Public backend base URL used for health checks and smoke tests |
+
+The workflow verifies the deployment in three stages:
+
+1. It re-runs CI through the reusable [ci.yml](.github/workflows/ci.yml) workflow.
+2. It deploys the Railway backend, waits for `/api/health` to report `healthy`, then deploys the Vercel frontend.
+3. It runs a Chromium Playwright smoke test against the live Vercel URL and Railway API to confirm room creation and live collaboration still work after deploy.
+
 ### Backend → Railway
 
 The repo includes a `railway.toml` that builds from the server Dockerfile. Create a new Railway project, link the repo, and set these environment variables:
@@ -148,6 +179,8 @@ After deploying both, verify:
 1. Open your Vercel URL → create a room
 2. Copy the room link → open in a second device/browser
 3. Type in one tab → edits appear in the other
+
+If you want GitHub Actions to own deploys completely, mirror the same Vercel and Railway environment configuration in both `staging` and `production` before enabling the workflow.
 
 ---
 

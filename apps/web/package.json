@@ -9,6 +9,7 @@
     "lint": "eslint src",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:deployed": "playwright test e2e/deployed-smoke.spec.ts --project=chromium",
     "test:e2e:chromium": "playwright test --project=chromium",
     "test:e2e:firefox": "playwright test --project=firefox",
     "test:e2e:webkit": "playwright test --project=webkit",
