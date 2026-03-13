@@ -3,24 +3,42 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Analytics } from "@vercel/analytics/next";
 
-function getMetadataBase(): URL {
-  const configuredBaseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  const vercelDeploymentUrl = process.env.VERCEL_URL;
+function firstNonEmptyValue(...values: Array<string | undefined>): string | undefined {
+  for (const value of values) {
+    const normalizedValue = value?.trim();
+    if (normalizedValue) {
+      return normalizedValue;
+    }
+  }
 
+  return undefined;
+}
+
+function getMetadataBase(): URL {
   const rawBaseUrl =
-    configuredBaseUrl ??
-    vercelProductionUrl ??
-    vercelDeploymentUrl ??
+    firstNonEmptyValue(
+      process.env.NEXT_PUBLIC_BASE_URL,
+      process.env.VERCEL_PROJECT_PRODUCTION_URL,
+      process.env.VERCEL_URL,
+    ) ??
     (process.env.NODE_ENV === "production"
       ? "https://codeduo.dev"
       : "http://localhost:3000");
 
-  return new URL(
+  const normalizedBaseUrl =
     rawBaseUrl.startsWith("http://") || rawBaseUrl.startsWith("https://")
       ? rawBaseUrl
-      : `https://${rawBaseUrl}`,
-  );
+      : `https://${rawBaseUrl}`;
+
+  try {
+    return new URL(normalizedBaseUrl);
+  } catch {
+    return new URL(
+      process.env.NODE_ENV === "production"
+        ? "https://codeduo.dev"
+        : "http://localhost:3000",
+    );
+  }
 }
 
 export const metadata: Metadata = {
