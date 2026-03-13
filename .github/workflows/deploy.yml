@@ -74,15 +74,13 @@ jobs:
       - name: Validate Railway environment configuration
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_NO_TELEMETRY: 1
         run: |
           test -n "$RAILWAY_TOKEN" || { echo "Missing RAILWAY_TOKEN secret"; exit 1; }
           test -n "${{ vars.RAILWAY_SERVICE }}" || { echo "Missing RAILWAY_SERVICE variable"; exit 1; }
           test -n "${{ vars.RAILWAY_PUBLIC_URL }}" || { echo "Missing RAILWAY_PUBLIC_URL variable"; exit 1; }
 
-          railway status \
-            --service "${{ vars.RAILWAY_SERVICE }}" \
-            --environment "${{ needs.resolve_target.outputs.environment }}" \
-            --json >/tmp/railway-status.json
+          railway whoami >/dev/null
 
       - name: Deploy server
         env:
